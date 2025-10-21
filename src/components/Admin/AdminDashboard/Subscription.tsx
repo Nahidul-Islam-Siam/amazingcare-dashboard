@@ -115,7 +115,10 @@ export default function SubsCriptionPage() {
         {/* Add Subscription Button */}
         <div className="flex justify-end mb-6">
           <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
-            <Plus size={18} />
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <path d="M2.5 21.5H21.5V2.5H2.50001L2.5 21.5Z" stroke="white" stroke-width="1.5" stroke-linecap="square"/>
+  <path d="M12 8V16M16 12H8" stroke="white" stroke-width="1.5" stroke-linecap="square"/>
+</svg>
             Add Subscriptions
           </Button>
         </div>

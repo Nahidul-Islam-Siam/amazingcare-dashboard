@@ -52,7 +52,7 @@ useEffect(() => {
       if (url) URL.revokeObjectURL(url);
     });
   };
-}, []); // Empty deps = runs once on unmount
+}, [previewUrls]); // Empty deps = runs once on unmount
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>

@@ -1,7 +1,6 @@
-import React from 'react'
+import AddSubscriptionPage from "@/components/SuperAdmin/AddSubscription";
+
 
 export default function page() {
-  return (
-    <div>page</div>
-  )
+  return <AddSubscriptionPage />
 }
