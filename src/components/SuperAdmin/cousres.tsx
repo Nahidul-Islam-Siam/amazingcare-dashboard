@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 export default function CoursesPage() {
@@ -95,8 +96,8 @@ export default function CoursesPage() {
         </div>
 
         {/* Add Live Button */}
-        <div className="flex justify-end mb-6">
-          <Button className="bg-blue-600 px-4 py-2 hover:bg-blue-700 text-white gap-2">
+        <Link href="/dashboard/courses/add-course" className="flex justify-end mb-6">
+          <Button  className="bg-blue-600 px-4 py-2 hover:bg-blue-700 text-white gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
@@ -117,9 +118,9 @@ export default function CoursesPage() {
                 stroke-linecap="square"
               />
             </svg>
-            Add Live
+            Add Course
           </Button>
-        </div>
+        </Link>
 
         {/* Table */}
         <div className="border rounded-lg overflow-hidden">

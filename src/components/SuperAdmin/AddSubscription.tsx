@@ -101,7 +101,7 @@ export default function AddSubscriptionPage() {
 
   return (
     <main className="min-h-screen bg-background p-6 md:p-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Add Subscription</h1>
