@@ -4,8 +4,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { MoreHorizontal, Plus } from "lucide-react";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function SubsCriptionPage() {
   const [selectedSubscription, setSelectedSubscription] = useState(null);
@@ -26,40 +27,42 @@ export default function SubsCriptionPage() {
   // Handle Deny with SweetAlert
   const handleDeny = async (id: number, name: string) => {
     const result = await Swal.fire({
-      title: 'Are you sure?',
+      title: "Are you sure?",
       text: `You are about to deny the subscription "${name}" (ID: ${id})`,
-      icon: 'warning',
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonText: 'Yes, deny it!',
-      cancelButtonText: 'Cancel',
+      confirmButtonText: "Yes, deny it!",
+      cancelButtonText: "Cancel",
       customClass: {
-        popup: 'border-2 border-red-200 rounded-lg shadow-xl',
-        confirmButton: 'bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-md',
-        cancelButton: 'bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md'
+        popup: "border-2 border-red-200 rounded-lg shadow-xl",
+        confirmButton:
+          "bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-md",
+        cancelButton:
+          "bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md",
       },
-      buttonsStyling: false
+      buttonsStyling: false,
     });
 
     if (result.isConfirmed) {
       try {
         await Swal.fire({
-          title: 'Denied!',
+          title: "Denied!",
           text: `Subscription "${name}" has been denied.`,
-          icon: 'success',
+          icon: "success",
           timer: 1500,
           showConfirmButton: false,
           customClass: {
-            popup: 'border-2 border-green-200 rounded-lg shadow-xl'
-          }
+            popup: "border-2 border-green-200 rounded-lg shadow-xl",
+          },
         });
       } catch (error) {
         Swal.fire({
-          title: 'Error!',
-          text: 'Failed to deny subscription.',
-          icon: 'error',
+          title: "Error!",
+          text: "Failed to deny subscription.",
+          icon: "error",
           customClass: {
-            popup: 'border-2 border-red-200 rounded-lg shadow-xl'
-          }
+            popup: "border-2 border-red-200 rounded-lg shadow-xl",
+          },
         });
       }
     }
@@ -77,15 +80,16 @@ export default function SubsCriptionPage() {
         </div>
       `,
       showCancelButton: true,
-      confirmButtonText: 'Save Changes',
-      cancelButtonText: 'Cancel',
+      confirmButtonText: "Save Changes",
+      cancelButtonText: "Cancel",
       customClass: {
-        popup: 'rounded-lg shadow-xl border overflow-hidden max-h-[90vh] overflow-y-auto'
+        popup:
+          "rounded-lg shadow-xl border overflow-hidden max-h-[90vh] overflow-y-auto",
       },
-      background: '#fff',
+      background: "#fff",
     }).then((result) => {
       if (result.isConfirmed) {
-        Swal.fire('Updated!', 'Subscription saved successfully.', 'success');
+        Swal.fire("Updated!", "Subscription saved successfully.", "success");
       }
     });
   };
@@ -94,7 +98,9 @@ export default function SubsCriptionPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="flex items-center justify-between p-6 border-b bg-white">
-        <h1 className="text-2xl font-bold text-gray-900">Subscription Management</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Subscription Management
+        </h1>
         <Button variant="outline" size="icon" className="border-gray-300">
           <MoreHorizontal className="h-5 w-5" />
         </Button>
@@ -106,22 +112,43 @@ export default function SubsCriptionPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <Card className="bg-[var(--brand-tints,#DDE7FE)] border-[var(--semi-brand,#398EFD)]">
             <CardContent className="py-8 text-center">
-              <p className="text-lg font-medium text-gray-700 mb-1">Total Subscription</p>
+              <p className="text-lg font-medium text-gray-700 mb-1">
+                Total Subscription
+              </p>
               <p className="text-xl font-bold text-gray-900">24</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Add Subscription Button */}
-        <div className="flex justify-end mb-6">
+        <Link
+          href="/admin/subscription/add-subscription"
+          className="flex justify-end mb-6"
+        >
           <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-  <path d="M2.5 21.5H21.5V2.5H2.50001L2.5 21.5Z" stroke="white" stroke-width="1.5" stroke-linecap="square"/>
-  <path d="M12 8V16M16 12H8" stroke="white" stroke-width="1.5" stroke-linecap="square"/>
-</svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path
+                d="M2.5 21.5H21.5V2.5H2.50001L2.5 21.5Z"
+                stroke="white"
+                stroke-width="1.5"
+                stroke-linecap="square"
+              />
+              <path
+                d="M12 8V16M16 12H8"
+                stroke="white"
+                stroke-width="1.5"
+                stroke-linecap="square"
+              />
+            </svg>
             Add Subscriptions
           </Button>
-        </div>
+        </Link>
 
         {/* Table */}
         <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
@@ -129,11 +156,21 @@ export default function SubsCriptionPage() {
             <table className="w-full">
               <thead>
                 <tr className="bg-blue-500 text-white">
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Subscription ID</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Price</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Post Date</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">Action</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                    Subscription ID
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                    Name
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                    Price
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                    Post Date
+                  </th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -171,13 +208,28 @@ export default function SubsCriptionPage() {
 
         {/* Pagination */}
         <div className="flex items-center justify-start gap-1 mt-6">
-          <Button variant="outline" size="sm" className="px-3 py-2">←</Button>
-          <Button size="sm" className="px-3 py-2 bg-blue-600 text-white font-semibold">1</Button>
-          <Button variant="outline" size="sm" className="px-3 py-2">2</Button>
+          <Button variant="outline" size="sm" className="px-3 py-2">
+            ←
+          </Button>
+          <Button
+            size="sm"
+            className="px-3 py-2 bg-blue-600 text-white font-semibold"
+          >
+            1
+          </Button>
+          <Button variant="outline" size="sm" className="px-3 py-2">
+            2
+          </Button>
           <span className="px-2 text-sm text-gray-500">...</span>
-          <Button variant="outline" size="sm" className="px-3 py-2">9</Button>
-          <Button variant="outline" size="sm" className="px-3 py-2">10</Button>
-          <Button variant="outline" size="sm" className="px-3 py-2">→</Button>
+          <Button variant="outline" size="sm" className="px-3 py-2">
+            9
+          </Button>
+          <Button variant="outline" size="sm" className="px-3 py-2">
+            10
+          </Button>
+          <Button variant="outline" size="sm" className="px-3 py-2">
+            →
+          </Button>
         </div>
       </div>
     </div>

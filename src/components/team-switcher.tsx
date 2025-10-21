@@ -42,7 +42,6 @@ export function TeamSwitcher({
                 alt="App Logo"
                 width={150}
                 priority
-                className="shadow-xl rounded-xl"
               />
             </Link>
           </div>
