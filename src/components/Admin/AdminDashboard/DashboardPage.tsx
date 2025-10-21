@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
+import Swal from "sweetalert2";
 
 // Mock Data — Matched to your image
 const donationData = [
@@ -63,26 +64,26 @@ export default function DashboardPage() {
           {
             title: "Total Donations",
             value: "$1248",
-            bg: "bg-[var(--brand-tints,#DDE7FE)]",
-            border: "border-[var(--semi-brand,#398EFD)]",
+            bg: "bg-blue-100",
+            border: "border-blue-300",
           },
           {
             title: "Total Courses",
             value: "68",
             bg: "bg-white",
-            border: "border-[var(--brand-tints,#DDE7FE)]",
+            border: "border-gray-200",
           },
           {
             title: "Total Students",
             value: "24",
             bg: "bg-white",
-            border: "border-[var(--brand-tints,#DDE7FE)]",
+            border: "border-gray-200",
           },
           {
             title: "Total Teachers",
             value: "12",
             bg: "bg-white",
-            border: "border-[var(--brand-tints,#DDE7FE)]",
+            border: "border-gray-200",
           },
         ].map((card, index) => (
           <Card key={index} className={`${card.bg} ${card.border} border`}>
@@ -98,7 +99,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Donations Chart */}
         <div className="lg:col-span-1">
-          <Card className="bg-[#DDE7FE] border-[var(--semi-brand,#398EFD)]">
+          <Card className="bg-blue-50 border-blue-300">
             <CardHeader>
               <CardTitle className="text-gray-900 text-xl font-bold">Donations</CardTitle>
             </CardHeader>
@@ -162,7 +163,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Teachers Table */}
         <div className="lg:col-span-1">
-          <Card className="bg-[#DDE7FE] border-[var(--semi-brand,#398EFD)]">
+          <Card className="bg-blue-50 border-blue-300">
             <CardHeader>
               <CardTitle className="text-gray-900 text-xl font-bold">Teachers</CardTitle>
             </CardHeader>
@@ -183,9 +184,40 @@ export default function DashboardPage() {
                         <TableCell className="py-3 text-gray-800">{teacher.name}</TableCell>
                         <TableCell className="py-3 text-center">
                           {teacher.action === "Delete" ? (
-                            <Button variant="outline" size="sm" className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100">
+                            <button
+                              onClick={() => {
+                                import("sweetalert2").then(({ default: Swal }) => {
+                                  Swal.fire({
+                                    title: "Are you sure?",
+                                    text: `Do you want to delete Teacher #${teacher.id}?`,
+                                    icon: "warning",
+                                    showCancelButton: true,
+                                    confirmButtonText: "Yes, delete it!",
+                                    cancelButtonText: "Cancel",
+                                    confirmButtonColor: "#E20000",
+                                    reverseButtons: true,
+                                    customClass: {
+                                      popup: "border-2 border-red-100 rounded-lg shadow-xl",
+                                      confirmButton: "bg-red-600 hover:bg-red-700",
+                                    },
+                                  }).then((result) => {
+                                    if (result.isConfirmed) {
+                                      Swal.fire({
+                                        icon: "success",
+                                        title: "Deleted!",
+                                        text: `Teacher #${teacher.id} has been deleted.`,
+                                        timer: 2000,
+                                        timerProgressBar: true,
+                                        showConfirmButton: false,
+                                      });
+                                    }
+                                  });
+                                });
+                              }}
+                              className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors"
+                            >
                               Delete
-                            </Button>
+                            </button>
                           ) : (
                             <span className="text-gray-400">—</span>
                           )}
@@ -201,7 +233,7 @@ export default function DashboardPage() {
 
         {/* Students Table */}
         <div className="lg:col-span-2">
-          <Card className="bg-[#DDE7FE] border-[var(--semi-brand,#398EFD)]">
+          <Card className="bg-blue-50 border-blue-300">
             <CardHeader>
               <CardTitle className="text-gray-900 text-xl font-bold">Students</CardTitle>
             </CardHeader>
@@ -222,9 +254,40 @@ export default function DashboardPage() {
                         <TableCell className="py-3 text-gray-800">{student.name}</TableCell>
                         <TableCell className="py-3 text-center">
                           {student.action === "Delete" ? (
-                            <Button variant="outline" size="sm" className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100">
+                            <button
+                              onClick={() => {
+                                import("sweetalert2").then(({ default: Swal }) => {
+                                  Swal.fire({
+                                    title: "Are you sure?",
+                                    text: `Do you want to delete Student #${student.id}?`,
+                                    icon: "warning",
+                                    showCancelButton: true,
+                                    confirmButtonText: "Yes, delete it!",
+                                    cancelButtonText: "Cancel",
+                                    confirmButtonColor: "#E20000",
+                                    reverseButtons: true,
+                                    customClass: {
+                                      popup: "border-2 border-red-100 rounded-lg shadow-xl",
+                                      confirmButton: "bg-red-600 hover:bg-red-700",
+                                    },
+                                  }).then((result) => {
+                                    if (result.isConfirmed) {
+                                      Swal.fire({
+                                        icon: "success",
+                                        title: "Deleted!",
+                                        text: `Student #${student.id} has been deleted.`,
+                                        timer: 2000,
+                                        timerProgressBar: true,
+                                        showConfirmButton: false,
+                                      });
+                                    }
+                                  });
+                                });
+                              }}
+                              className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors"
+                            >
                               Delete
-                            </Button>
+                            </button>
                           ) : (
                             <span className="text-gray-400">—</span>
                           )}
