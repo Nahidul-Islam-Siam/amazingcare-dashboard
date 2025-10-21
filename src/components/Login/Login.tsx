@@ -119,7 +119,7 @@ const Login = () => {
               {/* Submit Button */}
               <Button
                 type="submit"
-                className="w-full h-12 bg-[#266CB7] hover:bg-yellow-500 text-white font-semibold text-base"
+                className="w-full h-12 bg-[#266CB7] hover:duration-75  text-white font-semibold text-base"
               >
                 Log In
               </Button>
