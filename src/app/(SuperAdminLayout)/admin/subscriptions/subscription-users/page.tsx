@@ -1,14 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import Swal from "sweetalert2";
 import { useState } from "react";
 import Link from "next/link";
 
-export default function SubsCriptionPage() {
+export default function SubsCriptionUserPage() {
   const [selectedSubscription, setSelectedSubscription] = useState(null);
 
   // Mock subscription data matching your image
@@ -95,18 +96,17 @@ export default function SubsCriptionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 bg-white">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Subscription Management
-        </h1>
+      <div className="flex items-center justify-between p-6 bg-white border-b">
+        <h1 className="text-2xl font-bold text-gray-900">Subscription Management</h1>
       </div>
 
       {/* Main Content */}
       <div className="p-6">
-        {/* Stats Card */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {/* Stats Card - Updated to match image */}
+       
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <Card className="bg-[var(--brand-tints,#DDE7FE)] border-[var(--semi-brand,#398EFD)]">
             <CardContent className="py-8 text-center">
               <p className="text-lg font-medium text-gray-700 mb-1">
@@ -116,45 +116,7 @@ export default function SubsCriptionPage() {
             </CardContent>
           </Card>
         </div>
-
-        <div className="flex flex-row gap-2 justify-end">
-          {/* Add Subscription Button */}
-          <Link
-            href="/admin/subscriptions/subscription-users"
-            className="flex justify-end mb-6"
-          >
-            <Button  variant={"destructive"} className=" ">See Subscription Users</Button>
-          </Link>
-
-          <Link
-            href="/admin/subscriptions/add-subscription"
-            className="flex justify-end mb-6"
-          >
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <path
-                  d="M2.5 21.5H21.5V2.5H2.50001L2.5 21.5Z"
-                  stroke="white"
-                  stroke-width="1.5"
-                  stroke-linecap="square"
-                />
-                <path
-                  d="M12 8V16M16 12H8"
-                  stroke="white"
-                  stroke-width="1.5"
-                  stroke-linecap="square"
-                />
-              </svg>
-              Add Subscriptions
-            </Button>
-          </Link>
-        </div>
+       
 
         {/* Table */}
         <div className="border rounded-lg overflow-hidden bg-white shadow-sm">
@@ -162,21 +124,11 @@ export default function SubsCriptionPage() {
             <table className="w-full">
               <thead>
                 <tr className="bg-blue-500 text-white">
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    Subscription ID
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    Name
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    Price
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    Post Date
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">
-                    Action
-                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Subscription ID</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Price</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Post Date</th>
+                  {/* <th className="px-4 py-3 text-right text-sm font-semibold">Action</th> */}
                 </tr>
               </thead>
               <tbody>
@@ -186,7 +138,7 @@ export default function SubsCriptionPage() {
                     <td className="px-4 py-3 text-sm">{sub.name}</td>
                     <td className="px-4 py-3 text-sm">{sub.price}</td>
                     <td className="px-4 py-3 text-sm">{sub.postDate}</td>
-                    <td className="px-4 py-3 text-right">
+                    {/* <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => openEditModal(sub)}
@@ -204,7 +156,7 @@ export default function SubsCriptionPage() {
                           <MoreHorizontal size={18} />
                         </button>
                       </div>
-                    </td>
+                    </td> */}
                   </tr>
                 ))}
               </tbody>
@@ -212,7 +164,7 @@ export default function SubsCriptionPage() {
           </div>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination - Updated to match image */}
         <div className="flex items-center justify-start gap-1 mt-6">
           <Button variant="outline" size="sm" className="px-3 py-2">
             ←
