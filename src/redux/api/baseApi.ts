@@ -4,7 +4,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const baseApi = createApi({
   baseQuery: fetchBaseQuery({
     // baseUrl: "http://10.0.20.132:5002/api/v1", 
-    baseUrl: "http://72.60.70.222:12002/api/v1", 
+    baseUrl: "https://amazing-care.onrender.com/api/v1", 
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as any).auth.token;
       if (token) {

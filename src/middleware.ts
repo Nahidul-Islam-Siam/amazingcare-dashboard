@@ -1,57 +1,54 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// import { NextResponse } from "next/server";
-// import type { NextRequest } from "next/server";
-// import jwt from "jsonwebtoken";
-
-// export function middleware(req: NextRequest) {
-//   const { cookies, nextUrl } = req;
-//   const accessToken = cookies.get("access_token")?.value;
-
-//   // If no token, redirect to login
-//   if (!accessToken) {
-//     return NextResponse.redirect(new URL("/", req.url));
-//   }
-
-//   try {
-//     // decode token (no signature verification)
-//     const decoded = jwt.decode(accessToken) as any;
-
-//     const role = decoded?.role?.toUpperCase() || "";
-
-//     // Example: Protect /dashboard for ADMIN only
-//     if (nextUrl.pathname.startsWith("/dashboard") && role !== "ADMIN" && role !== "MANAGER") {
-//       return NextResponse.redirect(new URL("/", req.url));
-//     }
-
-//     // You can add more protected routes/role checks here
-
-//     // If everything is fine, continue
-//     return NextResponse.next();
-//   } catch (err) {
-//     console.error("JWT decode error:", err);
-//     return NextResponse.redirect(new URL("/", req.url));
-//   }
-// }
-
-// // Apply middleware only to protected routes
-// export const config = {
-//   matcher: ["/dashboard/:path*"],
-// };
-
-
-
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import jwt from "jsonwebtoken";
 
 export function middleware(req: NextRequest) {
-  // 🔓 TEMPORARY: Bypass authentication and authorization
-  // You can re-enable this when accessToken is available
-  return NextResponse.next();
+  const { cookies, nextUrl } = req;
+  const token = cookies.get("token")?.value; // ✅ consistent with your login Cookies.set("token", ...)
+
+  // 🚫 No token: redirect to login
+  if (!token) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+
+  try {
+    // ✅ Decode token safely (no verification since we just need claims)
+    const decoded = jwt.decode(token) as any;
+
+    if (!decoded || !decoded.role) {
+      console.warn("Invalid token: missing role");
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+
+    const role = decoded.role.toUpperCase();
+    const path = nextUrl.pathname;
+
+    // ✅ Role-based access rules
+    const roleAccessMap: Record<string, string[]> = {
+      "/admin": ["ADMIN", "SUPER_ADMIN"],
+      "/dashboard": ["TEACHER"],
+    };
+
+    for (const routePrefix in roleAccessMap) {
+      if (path.startsWith(routePrefix)) {
+        const allowedRoles = roleAccessMap[routePrefix];
+        if (!allowedRoles.includes(role)) {
+          console.warn(`Access denied for role ${role} to ${routePrefix}`);
+          return NextResponse.redirect(new URL("/", req.url));
+        }
+      }
+    }
+
+    // ✅ All good → continue
+    return NextResponse.next();
+  } catch (error) {
+    console.error("JWT decode error:", error);
+    return NextResponse.redirect(new URL("/", req.url));
+  }
 }
 
-// Apply middleware only to protected routes
+// ✅ Apply middleware only to protected routes
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/:path*"], // You can add more protected paths here
 };

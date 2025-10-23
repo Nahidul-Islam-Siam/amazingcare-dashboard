@@ -1,11 +1,70 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { baseApi } from "@/redux/api/baseApi";
 import { setUser, setToken } from "./authSlice";
 
+// Types
+export enum UserRole {
+  ADMIN = "ADMIN",
+  TEACHER = "TEACHER",
+  SUPER_ADMIN = "SUPER_ADMIN",
+  USER = "USER",
+}
+
+export interface RegisterRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  role?: UserRole;
+  fcmToken?: string;
+  confirmPassword?: string;
+}
+
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    token?: string;
+    userId?: string;
+    role?: string;
+  };
+}
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  profileImage: string;
+  isNotification: boolean;
+  fcmToken: string;
+  dob: string | null;
+  role: string;
+}
+
+export interface GetProfileResponse {
+  success: boolean;
+  message: string;
+  data: UserProfile;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  password: string;
+}
+
+export interface ResetPasswordResponse {
+  success: boolean;
+  message: string;
+}
+
 export const authApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    login: build.mutation({
+    // ---------------- LOGIN ----------------
+    login: build.mutation<any, { email: string; password: string }>({
       query: (credentials) => ({
-        url: "/auth/login",    
+        url: "/auth/login",
         method: "POST",
         body: credentials,
       }),
@@ -13,7 +72,6 @@ export const authApi = baseApi.injectEndpoints({
         try {
           const { data } = await queryFulfilled;
           const token = data?.data?.token;
-
           if (token) {
             dispatch(setToken(token));
           }
@@ -23,8 +81,31 @@ export const authApi = baseApi.injectEndpoints({
       },
     }),
 
-    getProfile: build.query({
-      query: () => "/users/get-me",
+    // ---------------- REGISTER ----------------
+    register: build.mutation<RegisterResponse, RegisterRequest>({
+      query: (payload) => ({
+        url: "/users/register",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["Auth"], // refresh Auth cache
+      async onQueryStarted(arg, { queryFulfilled, dispatch }) {
+        try {
+          const { data } = await queryFulfilled;
+          const token = data?.data?.token;
+          if (token) {
+            dispatch(setToken(token));
+          }
+        } catch (err) {
+          console.error("Registration failed", err);
+        }
+      },
+    }),
+
+
+    // ---------------- GET PROFILE ----------------
+    getProfile: build.query<GetProfileResponse, void>({
+      query: () => "/auth/profile",
       providesTags: ["Auth"],
       async onQueryStarted(arg, { queryFulfilled, dispatch }) {
         try {
@@ -38,7 +119,8 @@ export const authApi = baseApi.injectEndpoints({
       },
     }),
 
-    forgetPassword: build.mutation({
+    // ---------------- FORGOT PASSWORD ----------------
+    forgetPassword: build.mutation<any, { email: string }>({
       query: (body) => ({
         url: `/auth/forgot-password`,
         method: "POST",
@@ -47,7 +129,8 @@ export const authApi = baseApi.injectEndpoints({
       invalidatesTags: ["Auth"],
     }),
 
-    resetPassword: build.mutation({
+    // ---------------- RESET PASSWORD ----------------
+    resetPassword: build.mutation<ResetPasswordResponse, ResetPasswordRequest>({
       query: (body) => ({
         url: `/auth/reset-password`,
         method: "POST",
@@ -56,8 +139,11 @@ export const authApi = baseApi.injectEndpoints({
       invalidatesTags: ["Auth"],
     }),
 
-
-    changePassword: build.mutation({
+    // ---------------- CHANGE PASSWORD ----------------
+    changePassword: build.mutation<
+      any,
+      { oldPassword: string; newPassword: string }
+    >({
       query: (body) => ({
         url: `/auth/change-password`,
         method: "PUT",
@@ -66,24 +152,23 @@ export const authApi = baseApi.injectEndpoints({
       invalidatesTags: ["Auth"],
     }),
 
-
-    
-
-    otpVerify: build.mutation({
+    // ---------------- OTP VERIFY ----------------
+    otpVerify: build.mutation<any, { email: string; otp: string }>({
       query: (body) => ({
         url: `/auth/verify-otp`,
-        method: 'POST',
-        body
-      })
-    })
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
 export const {
   useLoginMutation,
+  useRegisterMutation,
   useGetProfileQuery,
   useForgetPasswordMutation,
   useResetPasswordMutation,
+  useChangePasswordMutation,
   useOtpVerifyMutation,
-  useChangePasswordMutation
 } = authApi;

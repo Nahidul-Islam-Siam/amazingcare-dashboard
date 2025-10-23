@@ -11,16 +11,26 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react"; // ✅ Loader icon added
 import { useState } from "react";
 import Image from "next/image";
 import logo from "@/assets/logo/Logo.png";
 import { useForm } from "react-hook-form";
 import bg from "@/assets/logo/login-bg.png";
 import Link from "next/link";
+import { useLoginMutation } from "@/redux/features/auth/authApi";
+import { useDispatch } from "react-redux";
+import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
+import Cookies from "js-cookie";
+import { setAuthData } from "@/redux/features/auth/authSlice";
+import { jwtDecode } from "jwt-decode";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [login] = useLoginMutation();
+  const [loading, setLoading] = useState(false); // ✅ loader state
+
   const form = useForm({
     defaultValues: {
       email: "",
@@ -28,12 +38,81 @@ const Login = () => {
     },
   });
 
-  const onSubmit = (data: any) => {
-    console.log("Form submitted (design mode)", data);
-  };
+  const dispatch = useDispatch();
+  const router = useRouter();
+
+const onSubmit = async (data: any) => {
+  setLoading(true);
+  try {
+    const res = await login(data).unwrap();
+
+    if (res?.success) {
+      const { token, role, userId } = res.data;
+      const decoded: any = jwtDecode(token);
+
+      // Save to Redux
+      dispatch(
+        setAuthData({
+          token,
+          user: {
+            id: userId,
+            email: decoded.email,
+            role: role,
+          },
+        })
+      );
+
+      // Save to cookies
+      Cookies.set("token", token, { expires: 7, path: "/" });
+      Cookies.set("role", role, { expires: 7, path: "/" });
+
+      // Success alert
+      await Swal.fire({
+        icon: "success",
+        title: "Login Successful",
+        text: "Redirecting to your dashboard...",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      // ✅ Redirect logic based on role
+      if (role === "ADMIN" || role === "SUPER_ADMIN") {
+        router.push("/admin");
+      } else if (role === "TEACHER") {
+        router.push("/dashboard");
+      } else {
+        router.push("/");
+      }
+    } else {
+      // If response does not indicate success
+      Swal.fire({
+        icon: "error",
+        title: "Login Failed",
+        text: res?.message || "Unexpected response from server",
+      });
+    }
+  } catch (error) {
+    console.error("Login failed:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Login Failed",
+      text: "Invalid email or password",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="min-h-screen bg-white flex relative">
+      {/* ✅ Optional full-screen overlay loader */}
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/70 backdrop-blur-sm z-50">
+          <Loader2 className="animate-spin text-blue-600 w-10 h-10" />
+        </div>
+      )}
+
       {/* Left side - Login form */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
@@ -46,28 +125,25 @@ const Login = () => {
             className="mb-8"
           />
 
-          {/* Form header */}
           <h2 className="text-2xl font-semibold text-gray-900 mb-6">Login</h2>
 
           {/* Form */}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {/* Email Field */}
+              {/* Email */}
               <FormField
                 control={form.control}
                 name="email"
                 rules={{ required: "Email is required" }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Email
-                    </FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
                         placeholder="john.doe@gmail.com"
-                        className="h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                         {...field}
+                        className="h-10"
                       />
                     </FormControl>
                     <FormMessage />
@@ -75,23 +151,21 @@ const Login = () => {
                 )}
               />
 
-              {/* Password Field */}
+              {/* Password */}
               <FormField
                 control={form.control}
                 name="password"
                 rules={{ required: "Password is required" }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">
-                      Password
-                    </FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
-                          className="h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
                           {...field}
+                          className="h-10 pr-10"
                         />
                         <button
                           type="button"
@@ -111,31 +185,42 @@ const Login = () => {
                 )}
               />
 
-              {/* Forgot password link */}
+              {/* Forgot Password */}
               <div className="text-right">
-                <Link href="/forgot-password" className="text-xs text-blue-600 hover:underline">
-                  Forgot password
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  Forgot password?
                 </Link>
               </div>
 
-              {/* Submit Button */}
-      
-<Button
-                type="submit"
-                className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm"
-              >
-                Login 
-</Button>
-              {/* Sign Up Button */}
-       <Link href="/register">
+              {/* ✅ Login Button with Loader */}
               <Button
-              
-                variant="outline"
-                className="w-full h-10 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold text-sm"
+                type="submit"
+                className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center justify-center"
+                disabled={loading}
               >
-                Sign Up
+                {loading ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                    Logging in...
+                  </>
+                ) : (
+                  "Login"
+                )}
               </Button>
-       </Link>
+
+              {/* Sign Up Button */}
+              <Link href="/register">
+                <Button
+                  variant="outline"
+                  className="w-full h-10 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold text-sm"
+                  disabled={loading}
+                >
+                  Sign Up
+                </Button>
+              </Link>
             </form>
           </Form>
         </div>
@@ -143,7 +228,7 @@ const Login = () => {
 
       {/* Right side - Illustration */}
       <div className="hidden lg:flex lg:w-1/2 bg-gray-50 items-center justify-center p-12">
-        <div className=" rounded-lg  p-8 max-w-md">
+        <div className="rounded-lg p-8 max-w-md">
           <Image
             src={bg}
             alt="Security Illustration"

@@ -11,32 +11,24 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { LogOut } from "lucide-react";
-import { useGetProfileQuery } from "@/redux/features/dashboard/userApi";
 import { useAppDispatch } from "@/hooks/hooks";
 import { logout } from "@/redux/features/auth/authSlice";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-
-
+import { useGetProfileQuery } from "@/redux/features/auth/authApi";
+import { UserProfile } from "@/redux/features/auth/authApi"; // import the interface
 
 const AppHeader = () => {
   const [isOpen, setIsOpen] = useState(false);
-
-  const { data: userProfile, isLoading, isSuccess } = useGetProfileQuery();
-
-
-
-
-
-
   const dispatch = useAppDispatch();
   const router = useRouter();
-  
 
-  // Only define user if we have successful data
-  const user = isSuccess && userProfile?.data ? userProfile.data : null;
+  // Fetch user profile
+  const { data: userProfile, isLoading, isSuccess } = useGetProfileQuery();
 
-  // Show loading state first
+  // Extract user info safely
+  const user: UserProfile | null = isSuccess && userProfile?.data ? userProfile.data : null;
+
+  // Loading state
   if (isLoading) {
     return (
       <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b bg-white px-4 shadow-sm">
@@ -45,31 +37,34 @@ const AppHeader = () => {
           <Separator orientation="vertical" className="h-4" />
           <h1 className="text-lg font-medium text-gray-900">Loading...</h1>
         </div>
-        <div className="w-32"></div> {/* Placeholder for alignment */}
+        <div className="w-32"></div>
       </header>
     );
   }
 
-  // Once loaded, extract user info safely
+  // Handle user data display
   const displayName =
     user?.firstName && user?.lastName
       ? `${user.firstName} ${user.lastName}`
       : user?.email?.split("@")[0] || "Guest";
 
-  const avatarUrl = user?.profileImage || "https://github.com/shadcn.png";
-
-  // Determine if user is admin
-  const isAdmin = user?.email === "admin@gmail.com";
-  const role = isAdmin ? "Administrator" : "User";
+  const avatarUrl =
+    user?.profileImage && user.profileImage.trim() !== ""
+      ? user.profileImage
+      : "https://github.com/shadcn.png";
 
   const handleLogout = () => {
     dispatch(logout());
     router.push("/");
   };
 
+  // If you want to eventually display the real role (if returned from profile API)
+  // For now, use a placeholder
+  const role = "Teacher"; // or use user?.role if added in profile later
+
   return (
     <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b bg-white px-4 shadow-sm">
-      {/* Left Side */}
+      {/* Left Section */}
       <div className="flex items-center gap-2">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="h-4" />
@@ -78,7 +73,7 @@ const AppHeader = () => {
         </h1>
       </div>
 
-      {/* Right Side - User Menu */}
+      {/* Right Section */}
       <div className="flex items-center gap-3">
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild>
@@ -88,19 +83,7 @@ const AppHeader = () => {
               </Avatar>
 
               <div className="flex flex-col text-sm leading-none">
-                {/* Name + Admin Badge */}
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-gray-900">{displayName}</span>
-                  {isAdmin && (
-                    <Image
-                      src="/badge.png"
-                      alt="Admin Badge"
-                      width={30}
-                      height={30}
-                      className="rounded-full"
-                    />
-                  )}
-                </div>
+                <span className="font-semibold text-gray-900">{displayName}</span>
                 <span className="text-gray-500">{role}</span>
               </div>
             </div>
