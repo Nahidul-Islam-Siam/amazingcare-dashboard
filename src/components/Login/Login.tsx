@@ -48,56 +48,50 @@ const onSubmit = async (data: any) => {
 
     if (res?.success) {
       const { token, role, userId } = res.data;
-      const decoded: any = jwtDecode(token);
 
-      // Save to Redux
+      let decoded;
+      try {
+        decoded = jwtDecode(token);
+      } catch (e) {
+        throw new Error("Invalid token");
+      }
+
       dispatch(
         setAuthData({
           token,
           user: {
             id: userId,
-            email: decoded.email,
-            role: role,
+            email: (decoded as any).email,
+            role,
           },
         })
       );
 
-      // Save to cookies
-      Cookies.set("token", token, { expires: 7, path: "/" });
-      Cookies.set("role", role, { expires: 7, path: "/" });
+      Cookies.set("token", token, { expires: 7 });
+      Cookies.set("role", role, { expires: 7 });
 
-      // Success alert
+      // Show success without auto-timer
       await Swal.fire({
         icon: "success",
-        title: "Login Successful",
-        text: "Redirecting to your dashboard...",
-        timer: 1500,
+        title: "Logged In!",
+        text: "Redirecting...",
+        timer: 1000,
         showConfirmButton: false,
       });
 
-      // ✅ Redirect logic based on role
+      // Now redirect safely
       if (role === "ADMIN" || role === "SUPER_ADMIN") {
-        router.push("/admin");
+        router.replace("/admin");
       } else if (role === "TEACHER") {
-        router.push("/dashboard");
+        router.replace("/dashboard");
       } else {
-        router.push("/");
+        router.replace("/");
       }
     } else {
-      // If response does not indicate success
-      Swal.fire({
-        icon: "error",
-        title: "Login Failed",
-        text: res?.message || "Unexpected response from server",
-      });
+      Swal.fire("Login Failed", res.message || "Unknown error", "error");
     }
   } catch (error) {
-    console.error("Login failed:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Login Failed",
-      text: "Invalid email or password",
-    });
+    Swal.fire("Error", "Invalid credentials or server error.", "error");
   } finally {
     setLoading(false);
   }

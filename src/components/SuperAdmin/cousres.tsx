@@ -78,14 +78,9 @@ export default function  CoursesPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b">
+      <div className="flex items-center justify-between p-6 ">
         <h1 className="text-2xl font-bold">All Courses</h1>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">John Doe</span>
-          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-            <span className="font-semibold">J</span>
-          </div>
-        </div>
+       
       </div>
 
       <div className="p-6">
