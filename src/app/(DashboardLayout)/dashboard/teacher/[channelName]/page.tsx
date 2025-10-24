@@ -10,7 +10,7 @@ interface TeacherChannelPageProps {
 
 export default function TeacherChannelPage({ params }: TeacherChannelPageProps) {
   const channelName = params.channelName
-
+e
   // Access public env vars with NEXT_PUBLIC_ prefix
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID || ""
 
