@@ -1,16 +1,17 @@
 // src/app/(DashboardLayout)/dashboard/teacher/[channelName]/page.tsx
-
+'use client'
 import Call from "@/components/Agora_live_streaming/Call"
+import { useParams } from "next/navigation"
 
-interface TeacherChannelPageProps {
-  params: {
-    channelName: string
-  }
-}
 
-export default function TeacherChannelPage({ params }: TeacherChannelPageProps) {
-  const channelName = params.channelName
-e
+// interface TeacherChannelPageProps {
+//   params: {
+//     channelName: string
+//   }
+// }
+
+export default function TeacherChannelPage() {
+  const channelName = useParams().channelName
   // Access public env vars with NEXT_PUBLIC_ prefix
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID || ""
 

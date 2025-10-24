@@ -14,7 +14,9 @@ import {
   IAgoraRTCClient, // ✅ we’ll use this type
 } from "agora-rtc-react";
 import AgoraRTCSDK from "agora-rtc-sdk-ng"; // ✅ import the SDK itself
+import Link from "next/link";
 import { useEffect, useState } from "react";
+import VideosWithControls from "./VideoWithControls";
 
 interface CallProps {
   appId: string;
@@ -41,16 +43,17 @@ const client = useRTCClient(
 
   return (
     <AgoraRTCProvider client={client}>
-      <Videos appId={appId} channelName={channelName} role={role} />
+<VideosWithControls role={role} />
+
 
       {/* End Call Button */}
       <div className="fixed z-10 bottom-0 left-0 right-0 flex justify-center pb-4">
-        <a
+        <Link
           href="/dashboard/teacher"
           className="px-5 py-3 text-base font-medium text-center text-white bg-red-500 rounded-lg hover:bg-red-600 focus:ring-4 focus:ring-red-300 dark:focus:ring-red-900 w-40"
         >
           End Call
-        </a>
+        </Link>
       </div>
     </AgoraRTCProvider>
   );
