@@ -148,15 +148,6 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: string)
   });
 };
 
-  // Helper to render date in "Mo, May 14" format
-  const formatDateDisplay = (date: Date | null) => {
-    if (!date) return "Set Availability Time";
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  };
 
   return (
     <main className="min-h-screen bg-background p-6 md:p-8">
@@ -249,102 +240,7 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: string)
             </div>
 
             {/* Set Availability Time */}
-            <div className="space-y-2">
-              <Label className="text-foreground font-semibold">
-                Set Availability Time
-              </Label>
-              <div
-                className="relative w-full p-3 border border-input rounded-md cursor-pointer bg-card hover:bg-card/50"
-                onClick={() => setShowDatePicker(true)}
-              >
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-muted-foreground" />
-                  <span className="text-sm text-foreground">
-                    {formatDateDisplay(selectedDate)}
-                  </span>
-                </div>
-              </div>
 
-              {/* Date Picker Modal */}
-              {showDatePicker && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                  <div className="bg-white p-4 rounded-lg shadow-lg w-[320px]">
-                    <div className="flex justify-between items-center mb-4">
-                      <button
-                        onClick={() => setShowDatePicker(false)}
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        Cancel
-                      </button>
-                      <h3 className="text-lg font-semibold">Select Date</h3>
-                      <button
-                        onClick={() => {
-                          if (selectedDate) handleDateSelect(selectedDate);
-                        }}
-                        className="text-blue-600 hover:text-blue-800 font-medium"
-                      >
-                        Okay
-                      </button>
-                    </div>
-
-                    {/* Simple Month Selector */}
-                    <div className="mb-4">
-                      <select
-                        className="border rounded px-2 py-1 w-full"
-                        value={
-                          selectedDate?.getFullYear() ||
-                          new Date().getFullYear()
-                        }
-                        onChange={(e) => {
-                          const year = parseInt(e.target.value);
-                          const month = selectedDate?.getMonth() || 0;
-                          const day = selectedDate?.getDate() || 1;
-                          setSelectedDate(new Date(year, month, day));
-                        }}
-                      >
-                        {[...Array(10)].map((_, i) => {
-                          const year = new Date().getFullYear() - 5 + i;
-                          return (
-                            <option key={year} value={year}>
-                              {year}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
-
-                    {/* Simple Day Grid (for demo) */}
-                    <div className="grid grid-cols-7 gap-1 text-center text-xs">
-                      {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-                        <div key={day} className="font-semibold">
-                          {day}
-                        </div>
-                      ))}
-                      {[...Array(31)].map((_, i) => {
-                        const day = i + 1;
-                        return (
-                          <div
-                            key={day}
-                            className={`p-2 rounded ${
-                              selectedDate?.getDate() === day
-                                ? "bg-blue-100 text-blue-700"
-                                : "hover:bg-gray-100"
-                            } cursor-pointer`}
-                            onClick={() => {
-                              const d = new Date();
-                              d.setDate(day);
-                              setSelectedDate(d);
-                            }}
-                          >
-                            {day}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Right Column - Upload Sections */}
