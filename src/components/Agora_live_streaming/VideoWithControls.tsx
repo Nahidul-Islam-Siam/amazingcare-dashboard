@@ -46,17 +46,56 @@ export default function VideosWithControls({
   const [screenSharing, setScreenSharing] = useState(false);
   const [handRaised, setHandRaised] = useState(false);
   const [screenTrack, setScreenTrack] = useState<ILocalVideoTrack | null>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
 
-  // Play remote audio automatically
+  // Auto-play remote audio
   useEffect(() => {
     audioTracks.forEach((track) => track.play());
   }, [audioTracks]);
 
-  // Publish mic & cam if host
+  // Publish local tracks if host
   usePublish(role === "host" ? [localMicrophoneTrack, localCameraTrack] : []);
-  // Join channel
+
+  // Join Agora channel
   useJoin({ appid: appId, channel: channelName, token: null });
 
+  // --- Agora Diagnostics & Live Status ---
+  useEffect(() => {
+    const handleConnection = (cur: string, prev: string) => {
+      console.log("Agora connection state changed:", prev, "→", cur);
+      setIsStreaming(cur === "CONNECTED");
+    };
+
+    const handlePublished = (user: any, mediaType: string) => {
+      console.log(`✅ Published: ${user.uid} (${mediaType})`);
+    };
+
+    const handleUnpublished = (user: any, mediaType: string) => {
+      console.log(`🛑 Unpublished: ${user.uid} (${mediaType})`);
+    };
+
+    client.on("connection-state-change", handleConnection);
+    client.on("user-published", handlePublished);
+    client.on("user-unpublished", handleUnpublished);
+
+    return () => {
+      client.off("connection-state-change", handleConnection);
+      client.off("user-published", handlePublished);
+      client.off("user-unpublished", handleUnpublished);
+    };
+  }, [client]);
+
+  // --- Track State Diagnostics ---
+  useEffect(() => {
+    if (localCameraTrack) {
+      console.log("📹 Local camera track active:", localCameraTrack.isPlaying);
+    }
+    if (localMicrophoneTrack) {
+      console.log("🎤 Local mic enabled:", localMicrophoneTrack.enabled);
+    }
+  }, [localCameraTrack, localMicrophoneTrack]);
+
+  // --- Controls ---
   const toggleMic = async () => {
     if (localMicrophoneTrack) {
       await localMicrophoneTrack.setEnabled(!micEnabled);
@@ -82,6 +121,7 @@ export default function VideosWithControls({
         await client.publish(screen as unknown as any);
         setScreenTrack(screenVideoTrack);
         setScreenSharing(true);
+
         screenVideoTrack.on("track-ended", async () => {
           await client.unpublish(screen as unknown as any);
           if ((screenVideoTrack as any).stop) (screenVideoTrack as any).stop();
@@ -116,6 +156,19 @@ export default function VideosWithControls({
 
   return (
     <div className="relative flex flex-col w-full h-screen bg-black">
+      {/* 🟢 LIVE Indicator */}
+      <div className="absolute top-4 left-4 z-50">
+        {isStreaming ? (
+          <span className="bg-green-600 text-white px-3 py-1 rounded-full shadow-md font-semibold animate-pulse">
+            🟢 LIVE
+          </span>
+        ) : (
+          <span className="bg-red-600 text-white px-3 py-1 rounded-full shadow-md font-semibold">
+            🔴 OFFLINE
+          </span>
+        )}
+      </div>
+
       {/* Video Grid */}
       <div
         className="grid gap-1 flex-1 p-1"

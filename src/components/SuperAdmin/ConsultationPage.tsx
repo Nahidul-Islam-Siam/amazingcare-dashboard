@@ -1,8 +1,8 @@
 "use client";
 import { Card, CardContent } from "@/components/ui/card";
-import {  MoreHorizontal} from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
+import { Button } from "../ui/button";
 type DropdownId = number | null;
 export default function ConsultationPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -126,67 +126,11 @@ export default function ConsultationPage() {
                     <td className="px-4 py-3 text-sm">{consult.duration}</td>
                     <td className="px-4 py-3 text-sm">${consult.price}</td>
                     <td className="px-4 py-3 text-center relative">
-                      <div className="flex items-center justify-center gap-2">
-                        <button 
-                          className="text-gray-400 hover:text-gray-600 relative"
-                          onClick={() => setOpenDropdown(openDropdown === consult.id ? null : consult.id)}
-                        >
-                          <MoreHorizontal size={18} />
-                          {openDropdown === consult.id && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                              <button 
-                                className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenDropdown(null);
-                                  import('sweetalert2').then(({ default: Swal }) => {
-                                    Swal.fire({
-                                      title: 'Update Consultation',
-                                      text: `Are you sure you want to update consultation #${consult.id}?`,
-                                      icon: 'info',
-                                      showCancelButton: true,
-                                      confirmButtonText: 'Yes, update it!',
-                                      cancelButtonText: 'Cancel',
-                                      confirmButtonColor: '#3B82F6',
-                                    }).then((result) => {
-                                      if (result.isConfirmed) {
-                                        Swal.fire('Updated!', `Consultation #${consult.id} has been updated.`, 'success');
-                                      }
-                                    });
-                                  });
-                                }}
-                              >
-                                Update
-                              </button>
-                              <button 
-                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenDropdown(null);
-                                  import('sweetalert2').then(({ default: Swal }) => {
-                                    Swal.fire({
-                                      title: 'Are you sure?',
-                                      text: `You won't be able to revert the deletion of consultation #${consult.id}!`,
-                                      icon: 'warning',
-                                      showCancelButton: true,
-                                      confirmButtonText: 'Yes, delete it!',
-                                      cancelButtonText: 'No, cancel',
-                                      confirmButtonColor: '#EF4444',
-                                      reverseButtons: true,
-                                    }).then((result) => {
-                                      if (result.isConfirmed) {
-                                        Swal.fire('Deleted!', `Consultation #${consult.id} has been deleted.`, 'success');
-                                      }
-                                    });
-                                  });
-                                }}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          )}
-                        </button>
-                      </div>
+                   <Button variant="ghost" className="bg-[#2667FF] text-white" onClick={() => setOpenDropdown(openDropdown === consult.id ? null : consult.id)}>
+
+Join 
+
+                   </Button>
                     </td>
                   </tr>
                 ))}
