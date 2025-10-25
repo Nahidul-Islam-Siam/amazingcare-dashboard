@@ -1,29 +1,29 @@
-// src/app/(DashboardLayout)/dashboard/teacher/[channelName]/page.tsx
-'use client'
-import Call from "@/components/Agora_live_streaming/Call"
-import { useParams } from "next/navigation"
+"use client";
 
+import { AgoraRTCProvider, IAgoraRTCClient } from "agora-rtc-react";
+import AgoraRTC from "agora-rtc-sdk-ng";
+import Call from "@/components/Agora_live_streaming/Call";
+import UserMonitor from "@/components/Agora_live_streaming/UserMonitor";
 
-// interface TeacherChannelPageProps {
-//   params: {
-//     channelName: string
-//   }
-// }
+export default function TeacherChannelPage({ channelName }: { channelName: string }) {
+  const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID || "";
 
-export default function TeacherChannelPage() {
-  const channelName = useParams().channelName as string
-  // Access public env vars with NEXT_PUBLIC_ prefix
-  const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID || ""
+  // Create Agora client instance
+  const client: IAgoraRTCClient = AgoraRTC.createClient({ codec: "vp8", mode: "live" }) as unknown as IAgoraRTCClient;
 
   return (
-    <main className="relative flex w-full flex-col min-h-screen bg-gray-50">
-      {/* Channel Name */}
-      <p className="absolute z-10 top-4 left-8 text-2xl font-bold text-gray-900">
-        {channelName}
-      </p>
+    <AgoraRTCProvider client={client}>
+      <main className="flex w-full h-screen">
+        {/* Call / Video */}
+        <div className="flex-1">
+          <Call appId={appId} channelName={channelName} role="host" />
+        </div>
 
-      {/* Agora Call Component */}
-      <Call appId={appId} channelName={channelName} />
-    </main>
-  )
+        {/* Student Monitoring */}
+        <div className="w-80 border-l overflow-auto">
+          <UserMonitor />
+        </div>
+      </main>
+    </AgoraRTCProvider>
+  );
 }
