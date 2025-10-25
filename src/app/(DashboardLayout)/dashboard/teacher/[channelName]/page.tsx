@@ -11,7 +11,7 @@ import { useParams } from "next/navigation"
 // }
 
 export default function TeacherChannelPage() {
-  const channelName = useParams().channelName
+  const channelName = useParams().channelName as string
   // Access public env vars with NEXT_PUBLIC_ prefix
   const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID || ""
 
