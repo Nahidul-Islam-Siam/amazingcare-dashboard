@@ -1,13 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import AgoraRTC, { ILocalVideoTrack } from "agora-rtc-sdk-ng";
 import {
   LocalVideoTrack,
   RemoteUser,
   useLocalCameraTrack,
   useLocalMicrophoneTrack,
+  usePublish,
+  useJoin,
   useRemoteAudioTracks,
   useRemoteUsers,
+  useRTCClient,
 } from "agora-rtc-react";
 import {
   Mic,
@@ -15,14 +20,23 @@ import {
   Video,
   VideoOff,
   Monitor,
-  Hand
+  Hand,
+  XCircle,
 } from "lucide-react";
 
-function VideosWithControls({
-  role,
-}: {
+interface VideosWithControlsProps {
   role: "host" | "audience";
-}) {
+  appId: string;
+  channelName: string;
+}
+
+export default function VideosWithControls({
+  role,
+  appId,
+  channelName,
+}: VideosWithControlsProps) {
+  const client = useRTCClient();
+
   const { isLoading: isLoadingMic, localMicrophoneTrack } =
     useLocalMicrophoneTrack();
   const { isLoading: isLoadingCam, localCameraTrack } = useLocalCameraTrack();
@@ -34,50 +48,89 @@ function VideosWithControls({
   const [camEnabled, setCamEnabled] = useState(true);
   const [screenSharing, setScreenSharing] = useState(false);
   const [handRaised, setHandRaised] = useState(false);
+  const [screenTrack, setScreenTrack] = useState<ILocalVideoTrack | null>(null);
 
-  // Toggle mic
-  const toggleMic = () => {
-    if (localMicrophoneTrack) {
-      localMicrophoneTrack.setEnabled(!micEnabled);
-      setMicEnabled(!micEnabled);
-    }
-  };
-
-  // Toggle camera
-  const toggleCam = () => {
-    if (localCameraTrack) {
-      localCameraTrack.setEnabled(!camEnabled);
-      setCamEnabled(!camEnabled);
-    }
-  };
-
-  // Toggle screen share (simple simulation)
-  const toggleScreenShare = () => {
-    setScreenSharing(!screenSharing);
-    alert(
-      !screenSharing
-        ? "Screen sharing started (demo)"
-        : "Screen sharing stopped (demo)"
-    );
-  };
-
-  // Toggle hand raise (demo)
-  const toggleHand = () => {
-    setHandRaised(!handRaised);
-  };
-
+  // 🎧 Play remote audio automatically
   useEffect(() => {
     audioTracks.forEach((track) => track.play());
   }, [audioTracks]);
 
-  const deviceLoading = isLoadingMic || isLoadingCam;
+  // 🧩 Publish mic & cam
+  usePublish(role === "host" ? [localMicrophoneTrack, localCameraTrack] : []);
 
-  if (deviceLoading) {
+  // 📡 Join channel
+  useJoin({ appid: appId, channel: channelName, token: null });
+
+  // 🎤 Mic toggle
+  const toggleMic = async () => {
+    if (localMicrophoneTrack) {
+      await localMicrophoneTrack.setEnabled(!micEnabled);
+      setMicEnabled((prev) => !prev);
+    }
+  };
+
+  // 🎥 Cam toggle
+  const toggleCam = async () => {
+    if (localCameraTrack) {
+      await localCameraTrack.setEnabled(!camEnabled);
+      setCamEnabled((prev) => !prev);
+    }
+  };
+
+  // 🖥️ Screen share toggle
+  const toggleScreenShare = async () => {
+    if (!screenSharing) {
+      try {
+        const screen = await AgoraRTC.createScreenVideoTrack(
+          {
+            encoderConfig: "1080p_1",
+            optimizationMode: "motion",
+          },
+          "auto"
+        );
+
+        // Normalize to the video track (createScreenVideoTrack may return a single track or [videoTrack, audioTrack])
+        const screenVideoTrack = Array.isArray(screen) ? screen[0] : screen;
+
+        await client.publish(screen as unknown as any);
+        setScreenTrack(screenVideoTrack);
+        setScreenSharing(true);
+
+        // Auto stop when user clicks “Stop sharing” in browser UI
+        screenVideoTrack.on("track-ended", async () => {
+          await client.unpublish(screen as unknown as any);
+          // stop/close only the normalized video track (guard against missing methods)
+          if (typeof (screenVideoTrack as any).stop === "function") {
+            (screenVideoTrack as any).stop();
+          }
+          if (typeof (screenVideoTrack as any).close === "function") {
+            (screenVideoTrack as any).close();
+          }
+          setScreenTrack(null);
+          setScreenSharing(false);
+        });
+      } catch (err) {
+        console.error("❌ Screen share failed:", err);
+        alert("Screen share was cancelled or failed.");
+      }
+    } else {
+      if (screenTrack) {
+        await client.unpublish(screenTrack as unknown as any);
+        screenTrack.stop();
+        screenTrack.close();
+        setScreenTrack(null);
+      }
+      setScreenSharing(false);
+    }
+  };
+
+  // ✋ Hand raise toggle
+  const toggleHand = () => setHandRaised((prev) => !prev);
+
+  if (isLoadingMic || isLoadingCam) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <p className="animate-pulse text-gray-400 text-lg">
-          Initializing devices...
-        </p>
+      <div className="flex flex-col items-center justify-center h-screen text-gray-500">
+        <p className="animate-pulse text-lg">Loading devices...</p>
       </div>
     );
   }
@@ -85,10 +138,10 @@ function VideosWithControls({
   const unit = "minmax(0, 1fr) ";
 
   return (
-    <div className="flex flex-col justify-between w-full h-screen p-2 bg-black relative">
+    <div className="relative flex flex-col w-full h-screen bg-black">
       {/* Video Grid */}
       <div
-        className="grid gap-1 flex-1"
+        className="grid gap-1 flex-1 p-1"
         style={{
           gridTemplateColumns:
             remoteUsers.length > 9
@@ -100,9 +153,19 @@ function VideosWithControls({
               : unit,
         }}
       >
-        {role === "host" && localCameraTrack && (
+        {role === "host" && localCameraTrack && !screenSharing && (
           <LocalVideoTrack
-            track={localCameraTrack}
+            // ✅ Typecast to fix mismatch
+            track={localCameraTrack as unknown as any}
+            play
+            className="w-full h-full object-cover rounded-xl"
+          />
+        )}
+
+        {screenSharing && screenTrack && (
+          <LocalVideoTrack
+            // ✅ Typecast again
+            track={screenTrack as unknown as any}
             play
             className="w-full h-full object-cover rounded-xl"
           />
@@ -117,46 +180,74 @@ function VideosWithControls({
         ))}
       </div>
 
-      {/* Floating Controls */}
-      {role === "host" && (
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-4 bg-black bg-opacity-50 rounded-full p-3">
-          {/* Mic Button */}
+      {/* Bottom Control Bar */}
+      <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+        <div className="flex items-center gap-4 px-6 py-3 bg-black/60 rounded-full shadow-lg backdrop-blur-md">
+          {/* Mic */}
           <button
             onClick={toggleMic}
-            className={`w-12 h-12 flex items-center justify-center rounded-full transition-colors
-              ${micEnabled ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"}`}
+            className={`p-3 rounded-full transition ${
+              micEnabled
+                ? "bg-green-500 hover:bg-green-600"
+                : "bg-red-500 hover:bg-red-600"
+            }`}
+            title={micEnabled ? "Mute Mic" : "Unmute Mic"}
           >
-            {micEnabled ? <Mic className="w-6 h-6 text-white" /> : <MicOff className="w-6 h-6 text-white" />}
+            {micEnabled ? <Mic size={20} /> : <MicOff size={20} />}
           </button>
 
-          {/* Camera Button */}
+          {/* Cam */}
           <button
             onClick={toggleCam}
-            className={`w-12 h-12 flex items-center justify-center rounded-full transition-colors
-              ${camEnabled ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"}`}
+            className={`p-3 rounded-full transition ${
+              camEnabled
+                ? "bg-green-500 hover:bg-green-600"
+                : "bg-red-500 hover:bg-red-600"
+            }`}
+            title={camEnabled ? "Turn Off Camera" : "Turn On Camera"}
           >
-            {camEnabled ? <Video className="w-6 h-6 text-white" /> : <VideoOff className="w-6 h-6 text-white" />}
+            {camEnabled ? <Video size={20} /> : <VideoOff size={20} />}
           </button>
 
-          {/* Screen Share Button */}
+          {/* Screen Share */}
           <button
             onClick={toggleScreenShare}
-            className={`w-12 h-12 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-600 text-white transition`}
+            className={`p-3 rounded-full transition ${
+              screenSharing
+                ? "bg-blue-700 hover:bg-blue-800"
+                : "bg-blue-500 hover:bg-blue-600"
+            }`}
+            title={screenSharing ? "Stop Screen Sharing" : "Start Screen Sharing"}
           >
-            <Monitor className="w-6 h-6" />
+            <Monitor size={20} />
           </button>
 
-          {/* Raise Hand Button */}
+          {/* Hand Raise */}
           <button
             onClick={toggleHand}
-            className={`w-12 h-12 flex items-center justify-center rounded-full bg-yellow-500 hover:bg-yellow-600 text-white transition`}
+            className={`p-3 rounded-full transition ${
+              handRaised
+                ? "bg-yellow-500 animate-bounce"
+                : "bg-yellow-400 hover:bg-yellow-500"
+            }`}
+            title={handRaised ? "Lower Hand" : "Raise Hand"}
           >
-            <Hand className={`w-6 h-6 ${handRaised ? "animate-bounce" : ""}`} />
+            <Hand size={20} />
+          </button>
+
+          {/* End */}
+          <button
+            onClick={async () => {
+              await client.leave();
+              window.location.href = "/dashboard/teacher";
+            }}
+            className="p-3 bg-red-700 hover:bg-red-800 rounded-full transition"
+            title="End Call"
+          >
+            <XCircle size={20} />
           </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
-
-export default VideosWithControls;

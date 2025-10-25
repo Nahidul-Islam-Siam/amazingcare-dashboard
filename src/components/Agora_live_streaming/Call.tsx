@@ -43,7 +43,7 @@ const client = useRTCClient(
 
   return (
     <AgoraRTCProvider client={client}>
-<VideosWithControls role={role} />
+<VideosWithControls appId={appId} channelName={channelName} role={role} />
 
 
       {/* End Call Button */}
