@@ -2,7 +2,6 @@
 "use client";
 
 import * as React from "react";
-
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
@@ -17,11 +16,10 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 export interface NavItem {
   title: string;
   url: string;
-icon: React.ComponentType<any>; // ✅ accepts Lucide + custom SVGs
-
+  icon?: React.ComponentType<any>; // ← Made optional with '?'
   isActive?: boolean;
   disabled?: boolean;
-  children?: Omit<NavItem, "children">[];
+  children?: Omit<NavItem, "children">[]; // Now works without forcing `icon`
 }
 
 export function NavMain({ items }: { items: NavItem[] }) {
@@ -38,52 +36,59 @@ export function NavMain({ items }: { items: NavItem[] }) {
     }
   }, [pathname, items]);
 
-  const toggleOpen = (url: string) =>
+  const toggleOpen = (url: string) => {
     setOpenItem((prev) => (prev === url ? null : url));
+  };
 
   return (
     <SidebarGroup>
       <SidebarMenu>
         {items.map((item) => {
           const hasChildren = !!item.children?.length;
-          const parentActive =
-            (item.isActive ?? pathname === item.url) ||
+          const isActive =
+            (item.isActive ?? false) ||
+            pathname === item.url ||
             item.children?.some((c) => pathname.startsWith(c.url));
+
           const isOpen = openItem === item.url;
 
           return (
             <React.Fragment key={item.url}>
-              {/* Parent */}
-              <SidebarMenuItem>
+              {/* Parent Item */}
+              {/* Parent Item */}
+              <SidebarMenuItem key={item.url}>
                 <SidebarMenuButton
-                  asChild={!hasChildren}
                   tooltip={item.title}
-                  onClick={() => hasChildren && toggleOpen(item.url)}
                   className={`flex items-center rounded-md px-3 py-2 transition-colors duration-200 ${
-                    parentActive
-                      ? "bg-[#2662E6] text-white font-semibold hover:bg-[#2662E6] hover:text-white"
+                    isActive
+                      ? "bg-[#2662E6] text-white font-semibold"
                       : "text-[#797D86] hover:bg-[#2662E6] hover:text-white font-semibold"
                   } ${item.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                   disabled={item.disabled}
+                  // 👇 Handle click here only — no need for Link if not navigating
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (hasChildren) {
+                      toggleOpen(item.url);
+                    } else {
+                      // Navigate if no children and not already active
+                      window.location.href = item.url;
+                    }
+                  }}
                 >
-                  {hasChildren ? (
-                    <div className="flex items-center gap-2 w-full">
-                      {item.icon && <item.icon className="h-4 w-4" />}
-                      <span className=" ">{item.title}</span>
-                      <span className="ml-auto ">
+                  <div className="flex items-center gap-2 w-full">
+                    {item.icon && <item.icon className="h-4 w-4" />}
+                    <span>{item.title}</span>
+                    {hasChildren && (
+                      <span className="ml-auto">
                         {isOpen ? (
                           <ChevronDown className="h-4 w-4" />
                         ) : (
                           <ChevronRight className="h-4 w-4" />
                         )}
                       </span>
-                    </div>
-                  ) : (
-                    <Link href={item.url} className="flex items-center gap-2 w-full">
-                      {item.icon && <item.icon className="h-4 w-4" />}
-                      <span>{item.title}</span>
-                    </Link>
-                  )}
+                    )}
+                  </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
@@ -106,7 +111,6 @@ export function NavMain({ items }: { items: NavItem[] }) {
                           <Link
                             href={child.url}
                             className="flex items-center gap-2"
-                            // Removed onClick={collapseAll} to keep open
                           >
                             <span className="w-2 h-2 bg-[#080A09] rounded-full" />
                             <span>{child.title}</span>

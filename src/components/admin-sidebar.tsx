@@ -38,11 +38,32 @@ const data = {
       url: "/dashboard",
       icon: LayoutDashboard,
     },
+{
+  title: "Courses",
+  url: "/dashboard/courses/all-courses",
+  icon: GraduationCap,
+  children: [  // ← Changed from 'Children' to 'children'
     {
-      title: "Courses",
-      url: "/dashboard/courses",
-      icon: GraduationCap, // 🎓 Matches image
+      title: "All Courses",
+      url: "/dashboard/courses/all-courses",
+    },    {
+      title: "Lessons",
+      url: "/dashboard/courses/lessons",
     },
+    {
+      title: "Notes",
+      url: "/dashboard/courses/notes",
+    },
+    {
+      title: "Quizzes",
+      url: "/dashboard/courses/quizzes",
+    },
+    {
+      title: "Assignments",
+      url: "/dashboard/courses/assignments",
+    },
+  ],
+},
     {
       title: "Consultation",
       url: "/dashboard/consultion",
