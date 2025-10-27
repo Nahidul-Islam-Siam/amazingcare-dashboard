@@ -3,50 +3,91 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import TableSkeleton from "@/lib/Loader";
-import { useDeleteCourseMutation, useGetAllCoursesQuery } from "@/redux/features/teacherDashboard/courseApi";
+import { useDeleteCourseMutation, useGetMyCoursesQuery } from "@/redux/features/teacherDashboard/courseApi";
 import { MoreHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 
-
-
-export default function  CoursesPage() {
+export default function CoursesPage() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState(""); // <-- search state
+  const [searchTerm, setSearchTerm] = useState("");
   const limit = 10;
 
-  // Fetch courses from API with search
-  const { data, isLoading, isError } = useGetAllCoursesQuery({
+  // Fetch logged-in teacher's courses
+  const { data, isLoading, isError } = useGetMyCoursesQuery({
+    role: "TEACHER",
     page: currentPage,
     limit,
-    searchTerm,
   });
 
-  const [deleteCourse ] = useDeleteCourseMutation();
+  const [deleteCourse] = useDeleteCourseMutation();
 
-  const courses = data?.data || [];
+  // Extract data safely
+  const allCourses = data?.data || [];
   const totalCourses = data?.meta?.total || 0;
   const totalPages = Math.ceil(totalCourses / limit);
 
-  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  // Client-side search filter
+  const filteredCourses = allCourses.filter((course: any) =>
+    course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  // Reset to page 1 when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // Close dropdown on outside click or scroll
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (openDropdown) setOpenDropdown(null);
+    };
+
+    const handleScroll = () => {
+      if (openDropdown) setOpenDropdown(null);
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    window.addEventListener("scroll", handleScroll, true); // Capture phase
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [openDropdown]);
 
   // Pagination handlers
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
-  const nextPage = () => setCurrentPage((p) => Math.min(p + 1, totalPages));
-  const prevPage = () => setCurrentPage((p) => Math.max(p - 1, 1));
+  const paginate = (pageNumber: number) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
   if (isLoading) return <TableSkeleton />;
-
   if (isError)
     return (
       <div className="flex justify-center items-center h-screen text-red-500">
-        Failed to load courses.
+        Failed to load your courses. Please try again later.
       </div>
     );
 
-
- const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string) => {
     const result = await Swal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this!",
@@ -60,10 +101,7 @@ export default function  CoursesPage() {
 
     if (result.isConfirmed) {
       try {
-        // Call the mutation
         const res = await deleteCourse(id).unwrap();
-
-        // Show response message from server
         if (res?.success) {
           Swal.fire("Deleted!", res.message || "The course has been deleted.", "success");
         } else {
@@ -78,9 +116,8 @@ export default function  CoursesPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 ">
-        <h1 className="text-2xl font-bold">All Courses</h1>
-       
+      <div className="flex items-center justify-between p-6">
+        <h1 className="text-2xl font-bold">My Courses</h1>
       </div>
 
       <div className="p-6">
@@ -88,146 +125,145 @@ export default function  CoursesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <Card className="bg-blue-100 border border-blue-300">
             <CardContent className="py-8 text-center">
-              <p className="text-lg font-medium text-gray-700 mb-1">
-                Total Courses
-              </p>
+              <p className="text-lg font-medium text-gray-700 mb-1">Total Courses</p>
               <p className="text-xl font-bold text-gray-900">{totalCourses}</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Search & Add Course */}
-        <div className="flex justify-between mb-6 gap-4 flex-wrap">
+        <div className="flex flex-wrap justify-between mb-6 gap-4">
           <input
             type="text"
-            placeholder="Search courses..."
+            placeholder="Search courses by name or description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="border rounded px-4 py-2 w-full sm:w-1/3"
+            className="border rounded px-4 py-2 w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
           <Link href="/dashboard/courses/add-course">
-            <Button className="bg-blue-600 px-4 py-2 hover:bg-blue-700 text-white gap-2">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2">
               Add Course
             </Button>
           </Link>
         </div>
 
+        {/* Showing Info */}
+        {filteredCourses.length > 0 && (
+          <p className="text-sm text-gray-600 mb-4">
+            Showing {filteredCourses.length} of {totalCourses} course(s)
+          </p>
+        )}
+
         {/* Courses Table */}
-        <div className="border rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-blue-600 text-white">
-                  {[
-                    "Title",
-                    "Teacher",
-                    "Description",
-                    "Price",
-                    "Video Count",
-                    "Recommended",
-                    "Action",
-                  ].map((header) => (
-                    <th
-                      key={header}
-                      className="px-4 py-3 text-left font-semibold"
-                    >
+        <div className="border rounded-lg overflow-x-auto overflow-y-visible relative shadow-sm">
+          <table className="w-full text-sm table-auto">
+            <thead>
+              <tr className="bg-blue-600 text-white">
+                {["Title", "Teacher", "Description", "Price", "Enrollments", "Created At", "Action"].map(
+                  (header) => (
+                    <th key={header} className="px-4 py-3 text-left font-semibold min-w-[120px]">
                       {header}
                     </th>
-                  ))}
+                  )
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredCourses.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-10 text-gray-500 italic">
+                    {searchTerm
+                      ? `No courses match "${searchTerm}". Try a different keyword.`
+                      : "You haven't created any courses yet."}
+                  </td>
                 </tr>
-              </thead>
-
-              <tbody>
-                {courses.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="text-center py-6 text-gray-500 italic"
-                    >
-                      No courses found.
+              ) : (
+                filteredCourses.map((course: any) => (
+                  <tr
+                    key={course.id}
+                    className="border-t hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-4 py-3 font-medium break-words">{course.name}</td>
+                    <td className="px-4 py-3">{course.teacherName}</td>
+                    <td className="px-4 py-3 text-gray-600 max-w-xs truncate">
+                      {course.description || "-"}
                     </td>
-                  </tr>
-                ) : (
-                  courses.map((course: any) => (
-                    <tr
-                      key={course.id}
-                      className="border-t hover:bg-gray-50 transition"
+                    <td className="px-4 py-3">${course.price.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-center">{course.totalEnrollments}</td>
+                    <td className="px-4 py-3 text-gray-700">
+                      {new Date(course.createdAt).toLocaleDateString()}
+                    </td>
+                    <td
+                      className="px-4 py-3 text-center relative"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <td className="px-4 py-3">{course.name}</td>
-                      <td className="px-4 py-3">{course.user.firstName}</td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {course.description || "-"}
-                      </td>
-                      <td className="px-4 py-3">${course.price}</td>
-                      <td className="px-4 py-3 text-center">{course.videoCount}</td>
-                      <td className="px-4 py-3 text-center">
-                        {course.recommended ? (
-                          <span className="text-green-500 font-bold">✔</span>
-                        ) : (
-                          <span className="text-red-500 font-bold">✘</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-center relative">
-                        <button
-                          className="text-gray-400 hover:text-gray-600 relative"
-                          onClick={() =>
-                            setOpenDropdown(
-                              openDropdown === course.id ? null : course.id
-                            )
-                          }
-                        >
-                          <MoreHorizontal size={18} />
-                        </button>
+                      {/* Action Button with Unique ID */}
+                      <button
+                        id={`action-btn-${course.id}`}
+                        className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setOpenDropdown(openDropdown === course.id ? null : course.id);
+                        }}
+                        aria-label="More actions"
+                      >
+                        <MoreHorizontal size={18} />
+                      </button>
 
-                        {openDropdown === course.id && (
-                          <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                            <button
-                              className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenDropdown(null);
-                                import("sweetalert2").then(({ default: Swal }) =>
-                                  Swal.fire({
-                                    title: "Update Course",
-                                    text: `Update course "${course.name}"?`,
-                                    icon: "info",
-                                    showCancelButton: true,
-                                    confirmButtonText: "Yes, update",
-                                    confirmButtonColor: "#3B82F6",
-                                  })
-                                );
-                              }}
-                            >
+                      {/* Dropdown Menu using Fixed Positioning */}
+                      {openDropdown === course.id && (
+                        <div
+                          className="fixed bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-[120px]"
+                          style={{
+                            top: `${
+                              window.scrollY +
+                              (document.getElementById(`action-btn-${course.id}`)?.getBoundingClientRect()?.bottom ??
+                              0)
+                            }px`,
+                            right: `${
+                              window.innerWidth -
+                              (document.getElementById(`action-btn-${course.id}`)?.getBoundingClientRect().right ||
+                                0)
+                            }px`,
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                        >
+                          <Link href={`/dashboard/courses/edit/${course.id}`}>
+                            <button className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50">
                               Update
                             </button>
-                            <button
-                              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenDropdown(null);
-                                handleDelete(course.id
-                                );
-                              }}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                          </Link>
+                          <button
+                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setOpenDropdown(null);
+                              handleDelete(course.id);
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination Controls */}
         {totalPages > 1 && (
           <div className="flex items-center justify-start gap-1 mt-6 flex-wrap">
             <button
-              className="px-3 py-2 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+              className="px-3 py-2 text-sm border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={prevPage}
               disabled={currentPage === 1}
             >
@@ -237,10 +273,10 @@ export default function  CoursesPage() {
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <button
                 key={page}
-                className={`px-3 py-2 text-sm rounded ${
+                className={`px-3 py-2 text-sm rounded min-w-10 ${
                   currentPage === page
                     ? "bg-blue-600 text-white"
-                    : "border hover:bg-gray-50"
+                    : "border hover:bg-gray-50 text-gray-700"
                 }`}
                 onClick={() => paginate(page)}
               >
@@ -249,7 +285,7 @@ export default function  CoursesPage() {
             ))}
 
             <button
-              className="px-3 py-2 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
+              className="px-3 py-2 text-sm border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={nextPage}
               disabled={currentPage === totalPages}
             >

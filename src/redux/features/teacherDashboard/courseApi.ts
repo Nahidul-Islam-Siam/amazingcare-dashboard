@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { baseApi } from "@/redux/api/baseApi";
 
-
-
 export interface CourseTeacher {
   id: string;
   firstName: string;
@@ -14,6 +12,7 @@ export interface CourseEnrollment {
   paymentId: string;
 }
 
+// Course interface for getAllCourses (with user, enrollment, isBuy)
 export interface Course {
   id: string;
   name: string;
@@ -34,10 +33,24 @@ export interface Course {
   isBuy: boolean;
 }
 
+// Course interface for getMyCourses (simplified version)
+export interface MyCourse {
+  id: string;
+  name: string;
+  description: string;
+  thumbnailUrl: string;
+  price: number;
+  teacherId: string;
+  teacherName: string;
+  totalEnrollments: number;
+  createdAt: string;
+}
+
 export interface CoursesMeta {
   page: number;
   limit: number;
   total: number;
+  totalPage: number; // Added this based on the API response
 }
 
 export interface GetAllCoursesResponse {
@@ -47,6 +60,13 @@ export interface GetAllCoursesResponse {
   data: Course[];
 }
 
+// Response interface for getMyCourses
+export interface GetMyCoursesResponse {
+  success: boolean;
+  message: string;
+  meta: CoursesMeta;
+  data: MyCourse[];
+}
 
 export const courseApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -77,16 +97,49 @@ export const courseApi = baseApi.injectEndpoints({
       providesTags: ["courses"],
     }),
 
+    getMyCourses: build.query<
+      GetMyCoursesResponse,  
+      {
+        role?: string;
+        page?: number;
+        limit?: number;
+      }
+    >({
+      query: ({ role, page, limit } = {}) => {
+        const params = new URLSearchParams();
+        
+        if (role) params.append("role", role);
+        if (page) params.append("page", String(page));
+        if (limit) params.append("limit", String(limit));
 
-deleteCourse: build.mutation({
-  query: (id) => ({
-    url: `/courses/${id}`,
-    method: "DELETE",
+        return {
+          url: `/courses/see-my-courses?${params.toString()}`,
+          method: "GET",
+        };  
+      },
+      providesTags: ["courses"],
+    }),
+
+
+// In your courseApi.ts file, inside endpoints:
+
+addCourse: build.mutation({
+  query: (formData) => ({
+    url: `/courses/create-course`,
+    method: "POST",
+    body: formData,
   }),
   invalidatesTags: ["courses"],
 }),
 
+    deleteCourse: build.mutation({
+      query: (id) => ({
+        url: `/courses/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["courses"],
+    }),
   }),
 });
 
-export const { useGetAllCoursesQuery , useDeleteCourseMutation} = courseApi;
+export const { useGetAllCoursesQuery, useGetMyCoursesQuery, useDeleteCourseMutation, useAddCourseMutation } = courseApi;
