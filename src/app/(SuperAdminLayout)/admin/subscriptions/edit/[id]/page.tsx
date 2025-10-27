@@ -1,14 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Swal from "sweetalert2";
-import { useRouter } from "next/navigation";
-import { useCreateSubscriptionPlanMutation } from "@/redux/features/superAdmin/subscriptionPlanApi";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  useGetSingleSubscriptionPlanQuery,
+//   useUpdateSubscriptionPlanMutation,
+} from "@/redux/features/superAdmin/subscriptionPlanApi";
 
 // Shadcn Components
 import {
@@ -23,7 +26,12 @@ import { cn } from "@/lib/utils";
 
 export default function EditSubscriptionPage() {
   const router = useRouter();
-  const [createPlan, { isLoading }] = useCreateSubscriptionPlanMutation();
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
+
+  const { data, isLoading: isFetching, error } = useGetSingleSubscriptionPlanQuery({ id: id! }, { skip: !id });
+
+//   const [updatePlan, { isLoading: isUpdating }] = useUpdateSubscriptionPlanMutation();
 
   const [formData, setFormData] = useState({
     subscriptionName: "",
@@ -32,6 +40,31 @@ export default function EditSubscriptionPage() {
     description: "", // one feature per line
     availabilityDate: "", // Format: YYYY-MM
   });
+
+  // Pre-fill form when data is loaded
+  useEffect(() => {
+    if (data?.data) {
+      const plan = data.data;
+      setFormData({
+        subscriptionName: plan.name,
+        planPrice: String(plan.price),
+        billingCycle: plan.interval === "YEARLY" ? "yearly" : "monthly",
+        description: plan.features.join("\n"),
+        availabilityDate: "", // Optional: set if backend supports startDate
+      });
+    }
+
+    if (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Not Found",
+        text: "Could not load subscription plan.",
+        confirmButtonText: "Go Back",
+      }).then(() => {
+        router.push("/admin/subscriptions");
+      });
+    }
+  }, [data, error, router]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -44,95 +77,107 @@ export default function EditSubscriptionPage() {
     setFormData((prev) => ({ ...prev, billingCycle: cycle }));
   };
 
-  // Handle month selection from Calendar
   const handleMonthSelect = (date: Date | undefined) => {
     if (date) {
-      const monthYear = format(date, "yyyy-MM"); // Store as YYYY-MM
+      const monthYear = format(date, "yyyy-MM");
       setFormData((prev) => ({ ...prev, availabilityDate: monthYear }));
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+//   const handleSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
 
-    // Validation
-    if (!formData.subscriptionName.trim()) {
-      Swal.fire({
-        icon: "error",
-        title: "Required",
-        text: "Subscription name is required!",
-        confirmButtonText: "Okay",
-      });
-      return;
-    }
+//     if (!id) return;
 
-    const price = parseFloat(formData.planPrice);
-    if (!formData.planPrice || isNaN(price) || price < 0) {
-      Swal.fire({
-        icon: "error",
-        title: "Invalid Price",
-        text: "Please enter a valid price.",
-        confirmButtonText: "Fix It",
-      });
-      return;
-    }
+//     // Validation
+//     if (!formData.subscriptionName.trim()) {
+//       Swal.fire({
+//         icon: "error",
+//         title: "Required",
+//         text: "Subscription name is required!",
+//         confirmButtonText: "Okay",
+//       });
+//       return;
+//     }
 
-    const features = formData.description
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
+//     const price = parseFloat(formData.planPrice);
+//     if (!formData.planPrice || isNaN(price) || price < 0) {
+//       Swal.fire({
+//         icon: "error",
+//         title: "Invalid Price",
+//         text: "Please enter a valid price.",
+//         confirmButtonText: "Fix It",
+//       });
+//       return;
+//     }
 
-    if (features.length === 0) {
-      Swal.fire({
-        icon: "error",
-        title: "Missing Features",
-        text: "Please add at least one feature for this plan.",
-        confirmButtonText: "Add Feature",
-      });
-      return;
-    }
+//     const features = formData.description
+//       .split("\n")
+//       .map((line) => line.trim())
+//       .filter((line) => line.length > 0);
 
-    // Prepare payload
-    const payload = {
-      name: formData.subscriptionName,
-      price,
-      interval: formData.billingCycle === "monthly" ? ("MONTHLY" as const) : ("YEARLY" as const),
-      features,
-    };
+//     if (features.length === 0) {
+//       Swal.fire({
+//         icon: "error",
+//         title: "Missing Features",
+//         text: "Please add at least one feature for this plan.",
+//         confirmButtonText: "Add Feature",
+//       });
+//       return;
+//     }
 
-    try {
-      const result = await createPlan(payload).unwrap();
+//     const payload = {
+//       id,
+//       name: formData.subscriptionName,
+//       price,
+//       interval: formData.billingCycle === "monthly" ? ("MONTHLY" as const) : ("YEARLY" as const),
+//       features,
+//     };
 
-      // Success
-      Swal.fire({
-        icon: "success",
-        title: "Created Successfully! 🎉",
-        text: result.message || "Subscription plan has been saved.",
-        confirmButtonText: "Go to List",
-        confirmButtonColor: "#4CAF50",
-      }).then(() => {
-        router.push("/admin/subscriptions");
-      });
-    } catch (error: any) {
-      Swal.fire({
-        icon: "error",
-        title: "Failed to Create",
-        text: error?.data?.message || "There was an error saving the subscription plan.",
-        confirmButtonText: "Try Again",
-      });
-    }
-  };
+//     try {
+//       const result = await updatePlan(payload).unwrap();
+
+//       Swal.fire({
+//         icon: "success",
+//         title: "Updated Successfully! 🎉",
+//         text: result.message || "Subscription plan has been updated.",
+//         confirmButtonText: "Go to List",
+//         confirmButtonColor: "#4CAF50",
+//       }).then(() => {
+//         router.push("/admin/subscriptions");
+//       });
+//     } catch (error: any) {
+//       Swal.fire({
+//         icon: "error",
+//         title: "Update Failed",
+//         text: error?.data?.message || "Could not update subscription plan.",
+//         confirmButtonText: "Try Again",
+//       });
+//     }
+//   };
+
+  if (!id) {
+    return (
+      <div className="p-6 text-center text-red-500">No subscription ID provided.</div>
+    );
+  }
+
+  if (isFetching) {
+    return <div className="p-6 text-center">Loading subscription details...</div>;
+  }
 
   return (
     <main className="min-h-screen bg-background p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Add Subscription Plan</h1>
-          <p className="text-muted-foreground mt-2">Create a new subscription package with features and pricing.</p>
+          <h1 className="text-3xl font-bold text-foreground">Edit Subscription Plan</h1>
+          <p className="text-muted-foreground mt-2">
+            Update the details for &quot;{formData.subscriptionName || 'Loading...'}&quot;.
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
+        <form  className="space-y-6 max-w-md">
           {/* Subscription Name */}
           <div className="space-y-2">
             <Label htmlFor="subscriptionName" className="text-foreground font-semibold">
@@ -144,7 +189,7 @@ export default function EditSubscriptionPage() {
               placeholder="e.g., Premium Yearly"
               value={formData.subscriptionName}
               onChange={handleInputChange}
-              disabled={isLoading}
+            //   disabled={isFetching || isUpdating}
               className="bg-card border-input focus-visible:ring-2"
             />
           </div>
@@ -163,7 +208,7 @@ export default function EditSubscriptionPage() {
               placeholder="0.00"
               value={formData.planPrice}
               onChange={handleInputChange}
-              disabled={isLoading}
+            //   disabled={isUpdating}
               className="bg-card border-input focus-visible:ring-2"
             />
           </div>
@@ -176,7 +221,7 @@ export default function EditSubscriptionPage() {
                 type="button"
                 variant={formData.billingCycle === "monthly" ? "default" : "outline"}
                 onClick={() => handleBillingToggle("monthly")}
-                disabled={isLoading}
+                // disabled={isUpdating}
                 className={
                   formData.billingCycle === "monthly"
                     ? "bg-blue-600 hover:bg-blue-700 text-white flex-1"
@@ -189,7 +234,7 @@ export default function EditSubscriptionPage() {
                 type="button"
                 variant={formData.billingCycle === "yearly" ? "default" : "outline"}
                 onClick={() => handleBillingToggle("yearly")}
-                disabled={isLoading}
+                // disabled={isUpdating}
                 className={
                   formData.billingCycle === "yearly"
                     ? "bg-blue-600 hover:bg-blue-700 text-white flex-1"
@@ -213,7 +258,7 @@ export default function EditSubscriptionPage() {
               value={formData.description}
               onChange={handleInputChange}
               rows={5}
-              disabled={isLoading}
+            //   disabled={isUpdating}
               className="bg-card border-input resize-none focus-visible:ring-2 font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
@@ -221,66 +266,61 @@ export default function EditSubscriptionPage() {
             </p>
           </div>
 
-          {/* Availability Month Picker using shadcn Calendar */}
-  {/* Availability Month Picker using shadcn Calendar */}
-<div className="space-y-2">
-  <Label className="text-foreground font-semibold">Start Month (Optional)</Label>
+          {/* Availability Month Picker */}
+          <div className="space-y-2">
+            <Label className="text-foreground font-semibold">Start Month (Optional)</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !formData.availabilityDate && "text-muted-foreground"
+                  )}
+                //   disabled={isUpdating}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.availabilityDate ? (
+                    format(new Date(formData.availabilityDate + "-01"), "MMMM yyyy")
+                  ) : (
+                    <span>Pick a month</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <div className="p-3 border-b bg-muted/40">
+                  <p className="text-sm font-medium text-center">Select Start Month</p>
+                </div>
+    <Calendar
+  mode="single"
+  selected={
+    formData.availabilityDate
+      ? new Date(formData.availabilityDate + "-01")
+      : undefined
+  }
+  onSelect={(date) => date && handleMonthSelect(date)}
+  captionLayout="dropdown"
+  fromYear={2020}
+  toYear={2035}
+  initialFocus
+/>
 
-  <Popover>
-    <PopoverTrigger asChild>
-      <Button
-        variant="outline"
-        className={cn(
-          "w-full justify-start text-left font-normal",
-          !formData.availabilityDate && "text-muted-foreground"
-        )}
-        disabled={isLoading}
-      >
-        <CalendarIcon className="mr-2 h-4 w-4" />
-        {formData.availabilityDate ? (
-          format(new Date(formData.availabilityDate + "-01"), "MMMM yyyy")
-        ) : (
-          <span>Pick a month</span>
-        )}
-      </Button>
-    </PopoverTrigger>
-
-    <PopoverContent className="w-auto p-0" align="start">
-      <div className="p-3 border-b bg-muted/40">
-        <p className="text-sm font-medium text-center">Select Start Month</p>
-      </div>
-
-      <Calendar
-        mode="single"
-        selected={
-          formData.availabilityDate
-            ? new Date(formData.availabilityDate + "-01")
-            : undefined
-        }
-        onSelect={(date) => date && handleMonthSelect(date)}
-   captionLayout="dropdown"
-
-        fromYear={2020}
-        toYear={2035}
-        initialFocus
-      />
-    </PopoverContent>
-  </Popover>
-
-  <p className="text-xs text-muted-foreground">
-    Choose when this plan becomes active. Optional.
-  </p>
-</div>
-
+              </PopoverContent>
+            </Popover>
+            <p className="text-xs text-muted-foreground">
+              Choose when this plan becomes active. Optional.
+            </p>
+          </div>
 
           {/* Submit Button */}
           <div className="mt-8">
             <Button
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-base font-medium"
-              disabled={isLoading}
+            //   disabled={isUpdating}
             >
-              {isLoading ? "Creating..." : "Create Subscription"}
+              {/* {isUpdating ? "Updating..." : "Update Subscription"} */}
+              Update Subscription
             </Button>
           </div>
         </form>

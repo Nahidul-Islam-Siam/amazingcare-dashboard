@@ -21,10 +21,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useDeleteSubscriptionPlanMutation, useGetAllSubscriptionPlansQuery } from "@/redux/features/superAdmin/subscriptionPlanApi";
+// ✅ Add useUpdateSubscriptionPlanMutation
+import {
+  useDeleteSubscriptionPlanMutation,
+  useGetAllSubscriptionPlansQuery,
+  useUpdateSubscriptionPlanMutation,
+} from "@/redux/features/superAdmin/subscriptionPlanApi";
 import TableSkeleton from "@/lib/Loader";
 
-// Define Subscription Plan Type (can be moved to types/)
+// Define Subscription Plan Type
 type SubscriptionPlan = {
   id: string;
   name: string;
@@ -38,59 +43,60 @@ type SubscriptionPlan = {
 };
 
 export default function SubsCriptionPage() {
-  const { data, isLoading, isError } = useGetAllSubscriptionPlansQuery({});
+  const { data, isLoading, isError, refetch } = useGetAllSubscriptionPlansQuery({});
   const [deleteSubscriptionPlan] = useDeleteSubscriptionPlanMutation();
+  // ✅ Add update mutation
+  const [updateSubscriptionPlan] = useUpdateSubscriptionPlanMutation();
+
   const [currentSubscription, setCurrentSubscription] = useState<SubscriptionPlan | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const subscriptionPlans: SubscriptionPlan[] = data?.data || [];
 
-  // Handle Delete (Deny)
- const handleDelete = async (id: string, name: string) => {
-  const result = await Swal.fire({
-    title: "Are you sure?",
-    text: `You are about to delete "${name}" subscription plan?`,
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Yes, delete it!",
-    cancelButtonText: "Cancel",
-    customClass: {
-      popup: "border-2 border-red-200 rounded-lg shadow-xl",
-      confirmButton: "bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-md",
-      cancelButton: "bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md",
-    },
-    buttonsStyling: false,
-  });
+  // Handle Delete
+  const handleDelete = async (id: string, name: string) => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: `You are about to delete "${name}" subscription plan?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+      customClass: {
+        popup: "border-2 border-red-200 rounded-lg shadow-xl",
+        confirmButton: "bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-md",
+        cancelButton: "bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md",
+      },
+      buttonsStyling: false,
+    });
 
-  if (result.isConfirmed) {
-    try {
-      // ✅ Keep 'res' to capture the API response
-      const res = await deleteSubscriptionPlan({ id }).unwrap();
-
-      // Optionally: use res.data or res.message in success alert
-      Swal.fire({
-        title: "Deleted!",
-        text: `"${name}" subscription plan has been removed successfully.`,
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-        customClass: {
-          popup: "border-2 border-green-200 rounded-lg shadow-xl",
-        },
-      });
-    } catch (error) {
-      Swal.fire({
-        title: "Error!",
-        text: "Failed to delete subscription. Please try again.",
-        icon: "error",
-        customClass: {
-          popup: "border-2 border-red-200 rounded-lg shadow-xl",
-        },
-      });
+    if (result.isConfirmed) {
+      try {
+        const res = await deleteSubscriptionPlan({ id }).unwrap();
+        Swal.fire({
+          title: "Deleted!",
+          text: `"${name}" subscription plan has been removed successfully.`,
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+          customClass: {
+            popup: "border-2 border-green-200 rounded-lg shadow-xl",
+          },
+        });
+      } catch (error) {
+        Swal.fire({
+          title: "Error!",
+          text: "Failed to delete subscription. Please try again.",
+          icon: "error",
+          customClass: {
+            popup: "border-2 border-red-200 rounded-lg shadow-xl",
+          },
+        });
+      }
     }
-  }
-};
-  // Open Edit Modal (basic example)
+  };
+
+  // ✅ Open Edit Modal with Real API Update
   const openEditModal = (plan: SubscriptionPlan) => {
     Swal.fire({
       title: `Edit: ${plan.name}`,
@@ -114,18 +120,56 @@ export default function SubsCriptionPage() {
         </div>
       `,
       showCancelButton: true,
-      confirmButtonText: "Save",
+      confirmButtonText: "Save Changes",
       cancelButtonText: "Cancel",
       focusConfirm: false,
       preConfirm: () => {
-        const name = (document.getElementById("name") as HTMLInputElement).value;
-        const price = parseFloat((document.getElementById("price") as HTMLInputElement).value);
+        const name = (document.getElementById("name") as HTMLInputElement).value.trim();
+        const priceStr = (document.getElementById("price") as HTMLInputElement).value;
+        const price = parseFloat(priceStr);
         const interval = (document.getElementById("interval") as HTMLSelectElement).value as "MONTHLY" | "YEARLY";
+
+        if (!name) {
+          Swal.showValidationMessage("Please enter a valid name");
+          return;
+        }
+        if (isNaN(price) || price < 0) {
+          Swal.showValidationMessage("Please enter a valid price");
+          return;
+        }
+
         return { name, price, interval };
       },
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        Swal.fire("Updated!", "Subscription plan has been saved.", "success");
+        try {
+          // ✅ Call API with real update
+          const res = await updateSubscriptionPlan({
+            id: plan.id,
+            name: result.value.name,
+            price: result.value.price,
+            interval: result.value.interval,
+            features: plan.features, // Keep existing features for now
+          }).unwrap();
+
+          // ✅ Use response message
+          Swal.fire({
+            icon: "success",
+            title: "Updated!",
+            text: res.message || `"${res.data?.name}" has been updated.`,
+            timer: 1500,
+            showConfirmButton: false,
+          });
+
+          // ✅ Refresh list to reflect changes
+          refetch();
+        } catch (error: any) {
+          Swal.fire({
+            icon: "error",
+            title: "Update Failed",
+            text: error?.data?.message || "Could not save changes.",
+          });
+        }
       }
     });
   };
@@ -332,7 +376,7 @@ export default function SubsCriptionPage() {
           </div>
         </div>
 
-        {/* Optional: Pagination Placeholder */}
+        {/* Pagination Placeholder */}
         <div className="flex justify-start mt-6 text-sm text-gray-500">
           Showing {subscriptionPlans.length} plans
         </div>
