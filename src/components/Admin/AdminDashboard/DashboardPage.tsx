@@ -174,7 +174,7 @@ export default function DashboardPage() {
                     <TableRow className="bg-blue-500 hover:bg-blue-500">
                       <TableHead className="text-white font-medium">Teacher ID</TableHead>
                       <TableHead className="text-white font-medium">Teacher Name</TableHead>
-                      <TableHead className="text-white font-medium">Action</TableHead>
+                      {/* <TableHead className="text-white font-medium">Action</TableHead> */}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -182,7 +182,7 @@ export default function DashboardPage() {
                       <TableRow key={teacher.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <TableCell className="py-3 text-gray-800">{teacher.id}</TableCell>
                         <TableCell className="py-3 text-gray-800">{teacher.name}</TableCell>
-                        <TableCell className="py-3 text-center">
+                        {/* <TableCell className="py-3 text-center">
                           {teacher.action === "Delete" ? (
                             <button
                               onClick={() => {
@@ -221,7 +221,7 @@ export default function DashboardPage() {
                           ) : (
                             <span className="text-gray-400">—</span>
                           )}
-                        </TableCell>
+                        </TableCell> */}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -244,7 +244,7 @@ export default function DashboardPage() {
                     <TableRow className="bg-blue-500 hover:bg-blue-500">
                       <TableHead className="text-white font-medium">Student ID</TableHead>
                       <TableHead className="text-white font-medium">Student Name</TableHead>
-                      <TableHead className="text-white font-medium">Action</TableHead>
+                      {/* <TableHead className="text-white font-medium">Action</TableHead> */}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -252,7 +252,7 @@ export default function DashboardPage() {
                       <TableRow key={student.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <TableCell className="py-3 text-gray-800">{student.id}</TableCell>
                         <TableCell className="py-3 text-gray-800">{student.name}</TableCell>
-                        <TableCell className="py-3 text-center">
+                        {/* <TableCell className="py-3 text-center">
                           {student.action === "Delete" ? (
                             <button
                               onClick={() => {
@@ -291,7 +291,7 @@ export default function DashboardPage() {
                           ) : (
                             <span className="text-gray-400">—</span>
                           )}
-                        </TableCell>
+                        </TableCell> */}
                       </TableRow>
                     ))}
                   </TableBody>

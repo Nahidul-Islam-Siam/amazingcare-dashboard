@@ -21,106 +21,117 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useGetAllSubscriptionPlansQuery } from "@/redux/features/superAdmin/subscriptionPlanApi";
+
+// Define Subscription Plan Type (can be moved to types/)
+type SubscriptionPlan = {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+  interval: "MONTHLY" | "YEARLY";
+  active: boolean;
+  features: string[];
+  createdAt: string;
+  updatedAt: string;
+};
 
 export default function SubsCriptionPage() {
-  const [selectedSubscription, setSelectedSubscription] = useState(null);
+  const { data, isLoading, isError } = useGetAllSubscriptionPlansQuery({});
+  const [currentSubscription, setCurrentSubscription] = useState<SubscriptionPlan | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [currentSubscription, setCurrentSubscription] = useState<any>(null);
 
-  // Mock subscription data matching your image
-  const subscriptions = [
-    { id: 10001, name: "Pro", price: "$500", postDate: "8/16/13" },
-    { id: 10001, name: "Pro", price: "$500", postDate: "10/28/12" },
-    { id: 10001, name: "Pro", price: "$500", postDate: "9/18/16" },
-    { id: 10001, name: "Pro", price: "$500", postDate: "3/4/16" },
-    { id: 10001, name: "Pro", price: "$500", postDate: "6/19/14" },
-    { id: 10001, name: "Pro", price: "$500", postDate: "1/28/17" },
-    { id: 10001, name: "Pro", price: "$500", postDate: "8/15/17" },
-    { id: 10001, name: "Pro", price: "$500", postDate: "8/16/13" },
-    { id: 10001, name: "Pro", price: "$500", postDate: "2/11/12" },
-  ];
+  const subscriptionPlans: SubscriptionPlan[] = data?.data || [];
 
-  // Handle Deny with SweetAlert
-  const handleDeny = async (id: number, name: string) => {
+  // Handle Delete (Deny)
+  const handleDelete = async (id: string, name: string) => {
     const result = await Swal.fire({
       title: "Are you sure?",
-      text: `You are about to deny the subscription "${name}" (ID: ${id})`,
+      text: `You are about to delete "${name}" subscription plan?`,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Yes, deny it!",
+      confirmButtonText: "Yes, delete it!",
       cancelButtonText: "Cancel",
       customClass: {
         popup: "border-2 border-red-200 rounded-lg shadow-xl",
-        confirmButton:
-          "bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-md",
-        cancelButton:
-          "bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md",
+        confirmButton: "bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-md",
+        cancelButton: "bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md",
       },
       buttonsStyling: false,
     });
 
     if (result.isConfirmed) {
       try {
-        await Swal.fire({
-          title: "Denied!",
-          text: `Subscription "${name}" has been denied.`,
+        Swal.fire({
+          title: "Deleted!",
+          text: `Subscription "${name}" has been removed.`,
           icon: "success",
           timer: 1500,
           showConfirmButton: false,
-          customClass: {
-            popup: "border-2 border-green-200 rounded-lg shadow-xl",
-          },
         });
       } catch (error) {
         Swal.fire({
           title: "Error!",
-          text: "Failed to deny subscription.",
+          text: "Failed to delete subscription.",
           icon: "error",
-          customClass: {
-            popup: "border-2 border-red-200 rounded-lg shadow-xl",
-          },
         });
       }
     }
   };
 
-  // Show Edit Modal
-  const openEditModal = (subscription: any) => {
+  // Open Edit Modal (basic example)
+  const openEditModal = (plan: SubscriptionPlan) => {
     Swal.fire({
-      title: `Edit Subscription #${subscription.id}`,
+      title: `Edit: ${plan.name}`,
       html: `
-        <div class="text-left p-4">
-          <p><strong>Name:</strong> <input type="text" value="${subscription.name}" class="w-full border border-gray-300 rounded px-2 py-1 mt-1" /></p>
-          <p><strong>Price:</strong> <input type="text" value="${subscription.price}" class="w-full border border-gray-300 rounded px-2 py-1 mt-1" /></p>
-          <p><strong>Post Date:</strong> <input type="text" value="${subscription.postDate}" class="w-full border border-gray-300 rounded px-2 py-1 mt-1" /></p>
+        <div class="text-left p-4 space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Name</label>
+            <input type="text" id="name" value="${plan.name}" class="w-full border border-gray-300 rounded px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Price (${plan.currency})</label>
+            <input type="number" id="price" step="0.01" value="${plan.price}" class="w-full border border-gray-300 rounded px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Interval</label>
+            <select id="interval" class="w-full border border-gray-300 rounded px-3 py-2">
+              <option value="MONTHLY" ${plan.interval === "MONTHLY" ? "selected" : ""}>Monthly</option>
+              <option value="YEARLY" ${plan.interval === "YEARLY" ? "selected" : ""}>Yearly</option>
+            </select>
+          </div>
         </div>
       `,
       showCancelButton: true,
-      confirmButtonText: "Save Changes",
+      confirmButtonText: "Save",
       cancelButtonText: "Cancel",
-      customClass: {
-        popup:
-          "rounded-lg shadow-xl border overflow-hidden max-h-[90vh] overflow-y-auto",
+      focusConfirm: false,
+      preConfirm: () => {
+        const name = (document.getElementById("name") as HTMLInputElement).value;
+        const price = parseFloat((document.getElementById("price") as HTMLInputElement).value);
+        const interval = (document.getElementById("interval") as HTMLSelectElement).value as "MONTHLY" | "YEARLY";
+        return { name, price, interval };
       },
-      background: "#fff",
     }).then((result) => {
       if (result.isConfirmed) {
-        Swal.fire("Updated!", "Subscription saved successfully.", "success");
+        Swal.fire("Updated!", "Subscription plan has been saved.", "success");
       }
     });
   };
 
   // Open Details Modal
-  const openDetailsModal = (subscription: any) => {
-    setCurrentSubscription(subscription);
+  const openDetailsModal = (plan: SubscriptionPlan) => {
+    setCurrentSubscription(plan);
     setShowDetailsModal(true);
   };
 
-  // Inline Modal Component (must be inside the parent component)
+  // Inline Modal Component
   const SubscriptionDetailsModal = () => {
+    if (!currentSubscription) return null;
+
     return (
       <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-        <DialogContent className="p-0 max-w-[300px] bg-transparent border-none shadow-none">
+        <DialogContent className="p-0 max-w-[320px] bg-transparent border-none shadow-none">
           <div
             style={{
               background: "linear-gradient(135deg, #4A90E2, #2C6BDA)",
@@ -134,15 +145,7 @@ export default function SubsCriptionPage() {
             }}
           >
             {/* Header */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "15px",
-              }}
-            >
-              {/* Crown Icon */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
               <div
                 style={{
                   width: "40px",
@@ -154,13 +157,7 @@ export default function SubsCriptionPage() {
                   justifyContent: "center",
                 }}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  fill="white"
-                  viewBox="0 0 24 24"
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" viewBox="0 0 24 24">
                   <path d="M12 2L2 7l10 5 10-5M2 12v5l10 5 10-5M2 12h20v5" />
                 </svg>
               </div>
@@ -170,11 +167,11 @@ export default function SubsCriptionPage() {
                 <button
                   style={{
                     padding: "6px 12px",
-                    background: "white",
-                    color: "#2C6BDA",
+                    background: currentSubscription.interval === "MONTHLY" ? "white" : "transparent",
+                    color: currentSubscription.interval === "MONTHLY" ? "#2C6BDA" : "white",
+                    border: currentSubscription.interval === "MONTHLY" ? "none" : "1px solid white",
                     borderRadius: "6px",
                     fontWeight: "bold",
-                    border: "none",
                     cursor: "pointer",
                   }}
                 >
@@ -183,9 +180,9 @@ export default function SubsCriptionPage() {
                 <button
                   style={{
                     padding: "6px 12px",
-                    background: "transparent",
-                    color: "white",
-                    border: "1px solid white",
+                    background: currentSubscription.interval === "YEARLY" ? "white" : "transparent",
+                    color: currentSubscription.interval === "YEARLY" ? "#2C6BDA" : "white",
+                    border: currentSubscription.interval === "YEARLY" ? "none" : "1px solid white",
                     borderRadius: "6px",
                     fontWeight: "bold",
                     cursor: "pointer",
@@ -197,41 +194,22 @@ export default function SubsCriptionPage() {
             </div>
 
             {/* Title */}
-            <h3
-              style={{
-                fontSize: "18px",
-                margin: "0 0 10px 0",
-                fontWeight: "bold",
-              }}
-            >
-              Subscription
-            </h3>
+            <h3 style={{ fontSize: "18px", margin: "0 0 10px 0", fontWeight: "bold" }}>{currentSubscription.name}</h3>
 
-            {/* Features List */}
-            <p
-              style={{
-                fontSize: "14px",
-                margin: "0 0 10px 0",
-                textAlign: "left",
-                lineHeight: "1.5",
-              }}
-            >
-              Includes<br />
-              1. Can access all lessons<br />
-              2. Can communicate with communities<br />
-              3. Can have one to one session<br />
-              4. Can able to access course file
+            {/* Features */}
+            <p style={{ fontSize: "14px", margin: "0 0 10px 0", textAlign: "left", lineHeight: "1.5" }}>
+              Includes:<br />
+              {currentSubscription.features.map((feat, i) => (
+                <span key={i}>
+                  {i + 1}. {feat}
+                  <br />
+                </span>
+              ))}
             </p>
 
             {/* Price */}
-            <div
-              style={{
-                fontSize: "24px",
-                fontWeight: "bold",
-                marginTop: "20px",
-              }}
-            >
-              {currentSubscription?.price}.00
+            <div style={{ fontSize: "24px", fontWeight: "bold", marginTop: "20px" }}>
+              {currentSubscription.price.toFixed(2)} {currentSubscription.currency}
             </div>
           </div>
         </DialogContent>
@@ -239,60 +217,45 @@ export default function SubsCriptionPage() {
     );
   };
 
+  if (isLoading) return <div className="p-6 text-center">Loading subscription plans...</div>;
+  if (isError) return <div className="p-6 text-red-500 text-center">Failed to load subscription plans.</div>;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 bg-white">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Subscription Management
-        </h1>
+      <div className="flex items-center justify-between p-6 bg-white border-b">
+        <h1 className="text-2xl font-bold text-gray-900">Subscription Management</h1>
       </div>
 
       {/* Main Content */}
       <div className="p-6">
         {/* Stats Card */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-[var(--brand-tints,#DDE7FE)] border-[var(--semi-brand,#398EFD)]">
+          <Card className="bg-[#DDE7FE] border-[#398EFD]">
             <CardContent className="py-8 text-center">
-              <p className="text-lg font-medium text-gray-700 mb-1">
-                Total Subscription
-              </p>
-              <p className="text-xl font-bold text-gray-900">24</p>
+              <p className="text-lg font-medium text-gray-700 mb-1">Total Subscriptions</p>
+              <p className="text-xl font-bold text-gray-900">{subscriptionPlans.length}</p>
             </CardContent>
           </Card>
         </div>
 
-        <div className="flex flex-row gap-2 justify-end">
-          {/* Add Subscription Button */}
-          <Link href="/admin/subscriptions/subscription-users" className="flex justify-end mb-6">
-            <Button variant={"destructive"} className="">
-              See Subscription Users
-            </Button>
+        {/* Action Buttons */}
+        <div className="flex flex-row gap-2 justify-end mb-6">
+          <Link href="/admin/subscriptions/subscription-users">
+            <Button variant="destructive">See Subscription Users</Button>
           </Link>
-
-          <Link href="/admin/subscriptions/add-subscription" className="flex justify-end mb-6">
+          <Link href="/admin/subscriptions/add-subscription">
             <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <path
                   d="M2.5 21.5H21.5V2.5H2.50001L2.5 21.5Z"
                   stroke="white"
                   strokeWidth="1.5"
                   strokeLinecap="square"
                 />
-                <path
-                  d="M12 8V16M16 12H8"
-                  stroke="white"
-                  strokeWidth="1.5"
-                  strokeLinecap="square"
-                />
+                <path d="M12 8V16M16 12H8" stroke="white" strokeWidth="1.5" strokeLinecap="square" />
               </svg>
-              Add Subscriptions
+              Add Subscription
             </Button>
           </Link>
         </div>
@@ -303,84 +266,67 @@ export default function SubsCriptionPage() {
             <table className="w-full">
               <thead>
                 <tr className="bg-blue-500 text-white">
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    Subscription ID
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    Name
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    Price
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    Post Date
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold">
-                    Action
-                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">ID</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Price</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Interval</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {subscriptions.map((sub, index) => (
-                  <tr key={index} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm">{sub.id}</td>
-                    <td className="px-4 py-3 text-sm">{sub.name}</td>
-                    <td className="px-4 py-3 text-sm">{sub.price}</td>
-                    <td className="px-4 py-3 text-sm">{sub.postDate}</td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                {subscriptionPlans.length > 0 ? (
+                  subscriptionPlans.map((plan, index) => (
+                    <tr key={plan.id} className="border-t hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm">{index + 1}</td>
+                      <td className="px-4 py-3 text-sm font-medium">{plan.name}</td>
+                      <td className="px-4 py-3 text-sm">{plan.price.toFixed(2)} {plan.currency}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            plan.interval === "MONTHLY"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-blue-100 text-blue-800"
+                          }`}
+                        >
+                          {plan.interval}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button className="text-gray-400 hover:text-gray-600 focus:outline-none">
+                            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600">
                               <MoreHorizontal size={18} />
-                            </button>
+                            </Button>
                           </DropdownMenuTrigger>
-
-                          <DropdownMenuContent align="end" className="w-32">
-                            <DropdownMenuItem onClick={() => openEditModal(sub)}>
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDeny(sub.id, sub.name)}>
+                          <DropdownMenuContent align="end" className="w-36">
+                            <DropdownMenuItem onClick={() => openEditModal(plan)}>Edit</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDelete(plan.id, plan.name)} className="text-red-600">
                               Delete
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openDetailsModal(sub)}>
-                              Details
-                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openDetailsModal(plan)}>Details</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                      No subscription plans found.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-start gap-1 mt-6">
-          <Button variant="outline" size="sm" className="px-3 py-2">
-            ←
-          </Button>
-          <Button size="sm" className="px-3 py-2 bg-blue-600 text-white font-semibold">
-            1
-          </Button>
-          <Button variant="outline" size="sm" className="px-3 py-2">
-            2
-          </Button>
-          <span className="px-2 text-sm text-gray-500">...</span>
-          <Button variant="outline" size="sm" className="px-3 py-2">
-            9
-          </Button>
-          <Button variant="outline" size="sm" className="px-3 py-2">
-            10
-          </Button>
-          <Button variant="outline" size="sm" className="px-3 py-2">
-            →
-          </Button>
+        {/* Optional: Pagination Placeholder */}
+        <div className="flex justify-start mt-6 text-sm text-gray-500">
+          Showing {subscriptionPlans.length} plans
         </div>
 
-        {/* Render the Details Modal */}
+        {/* Render Modal */}
         <SubscriptionDetailsModal />
       </div>
     </div>

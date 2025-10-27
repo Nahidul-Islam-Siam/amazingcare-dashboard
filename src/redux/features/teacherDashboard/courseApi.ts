@@ -32,6 +32,8 @@ export interface Course {
   user: CourseTeacher;
   enrollment: CourseEnrollment[];
   isBuy: boolean;
+  totalEnrollments: number;
+  teacherName: string;
 }
 
 // Course interface for getMyCourses (simplified version)
