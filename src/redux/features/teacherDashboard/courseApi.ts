@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { baseApi } from "@/redux/api/baseApi";
 
 export interface CourseTeacher {
@@ -132,6 +133,33 @@ addCourse: build.mutation({
   invalidatesTags: ["courses"],
 }),
 
+addVideoLessonById: build.mutation({
+  query: ({ courseId, formData }) => ({
+    url: `/videos/${courseId}`,
+    method: "POST",
+    body: formData,
+  }),
+  invalidatesTags: ["courses"],
+}),
+
+addNotesById: build.mutation({
+  query: ({ courseId, noteData }) => ({
+    url: `/notes/${courseId}`,
+    method: "POST",
+    body: noteData,
+  }),
+  invalidatesTags: ["courses"],
+}),
+
+AddQuizzPage: build.mutation({
+  query: ({ courseId, quizData }) => ({
+    url: `/quizzes/${courseId}`,
+    method: "POST",
+    body: quizData,
+  }),
+  invalidatesTags: ["courses"],
+}),
+
     deleteCourse: build.mutation({
       query: (id) => ({
         url: `/courses/${id}`,
@@ -142,4 +170,4 @@ addCourse: build.mutation({
   }),
 });
 
-export const { useGetAllCoursesQuery, useGetMyCoursesQuery, useDeleteCourseMutation, useAddCourseMutation } = courseApi;
+export const { useGetAllCoursesQuery, useGetMyCoursesQuery, useDeleteCourseMutation, useAddCourseMutation, useAddVideoLessonByIdMutation, useAddNotesByIdMutation, useAddQuizzPageMutation } = courseApi;

@@ -42,27 +42,27 @@ const data = {
   title: "Courses",
   url: "/dashboard/courses/all-courses",
   icon: GraduationCap,
-  children: [  // ← Changed from 'Children' to 'children'
-    {
-      title: "All Courses",
-      url: "/dashboard/courses/all-courses",
-    },    {
-      title: "Lessons",
-      url: "/dashboard/courses/lessons",
-    },
-    {
-      title: "Notes",
-      url: "/dashboard/courses/notes",
-    },
-    {
-      title: "Quizzes",
-      url: "/dashboard/courses/quizzes",
-    },
-    {
-      title: "Assignments",
-      url: "/dashboard/courses/assignments",
-    },
-  ],
+  // children: [  // ← Changed from 'Children' to 'children'
+  //   {
+  //     title: "All Courses",
+  //     url: "/dashboard/courses/all-courses",
+  //   },    {
+  //     title: "Lessons",
+  //     url: "/dashboard/courses/lessons",
+  //   },
+  //   {
+  //     title: "Notes",
+  //     url: "/dashboard/courses/notes",
+  //   },
+  //   {
+  //     title: "Quizzes",
+  //     url: "/dashboard/courses/quizzes",
+  //   },
+  //   {
+  //     title: "Assignments",
+  //     url: "/dashboard/courses/assignments",
+  //   },
+  // ],
 },
     {
       title: "Consultation",

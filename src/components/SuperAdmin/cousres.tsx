@@ -233,11 +233,27 @@ export default function CoursesPage() {
                             e.stopPropagation();
                           }}
                         >
-                          <Link href={`/dashboard/courses/edit/${course.id}`}>
+                          <Link href={`/dashboard/courses/all-courses/lessons/${course.id}`}>
                             <button className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50">
-                              Update
+                              Update Lessons
                             </button>
                           </Link>
+                                <Link href={`/dashboard/courses/all-courses/notes/${course.id}`}>
+                            <button className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50">
+                              Update Notes
+                            </button>
+                          </Link>
+                                   <Link href={`/dashboard/courses/all-courses/quizzes/${course.id}`}>
+                            <button className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50">
+                              Update Quizzes
+                            </button>
+                          </Link>
+                                       <Link href={`/dashboard/courses/all-courses/assignments/${course.id}`}>
+                            <button className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50">
+                              Update Assignments
+                            </button>
+                          </Link>
+                       
                           <button
                             className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                             onClick={(e) => {
