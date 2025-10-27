@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import {  useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Swal from "sweetalert2";
 import { useParams, useRouter } from "next/navigation";
-import {  useAddQuizzPageMutation } from "@/redux/features/teacherDashboard/courseApi"; // Adjust path as needed
+import { useAddQuizzByIdMutation } from "@/redux/features/teacherDashboard/courseApi"; // ✅ Correct hook name
 
 export default function AddQuizzPage() {
   const params = useParams();
@@ -20,11 +20,9 @@ export default function AddQuizzPage() {
     documentUrl: "",
   });
 
-  const [addNote, { isLoading }] = useAddQuizzPageMutation();
+  const [addQuiz, { isLoading }] = useAddQuizzByIdMutation(); // ✅ Renamed to addQuiz
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -39,7 +37,7 @@ export default function AddQuizzPage() {
       return Swal.fire({
         icon: "error",
         title: "Missing Title",
-        text: "Note title is required.",
+        text: "Quiz title is required.",
         confirmButtonText: "OK",
       });
     }
@@ -53,7 +51,7 @@ export default function AddQuizzPage() {
       });
     }
 
-    // Optional: Validate URL format
+    // Validate URL format
     const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
     if (!urlRegex.test(formData.documentUrl.trim())) {
       return Swal.fire({
@@ -64,23 +62,24 @@ export default function AddQuizzPage() {
       });
     }
 
-    const noteData = {
+    const quizData = {
       title: formData.title.trim(),
       documentUrl: formData.documentUrl.trim(),
     };
 
     try {
-      const result = await addNote({ courseId, noteData }).unwrap();
+      const result = await addQuiz({ courseId, quizData }).unwrap(); // ✅ Correct usage
 
-      console.log("✅ Note added:", result);
+      console.log("✅ Quiz added:", result);
 
       Swal.fire({
         icon: "success",
-        title: "Note Added!",
-        text: result.message || "Note has been added successfully.",
+        title: "Quiz Added!",
+        text: result.message || "Quiz has been added successfully.",
         confirmButtonText: "Go to Course",
       }).then(() => {
-        router.push(`/dashboard/courses/all-courses/${courseId}`);
+        // ✅ Fixed redirect path
+        router.push(`/dashboard/courses/all-courses`);
       });
 
       // Reset form
@@ -91,7 +90,7 @@ export default function AddQuizzPage() {
       const errorMsg =
         error?.data?.message ||
         error?.statusText ||
-        "Failed to add note. Please try again.";
+        "Failed to add quiz. Please try again.";
 
       Swal.fire({
         icon: "error",
@@ -107,20 +106,20 @@ export default function AddQuizzPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Add Quizz</h1>
-          {/* <p className="text-gray-600 mt-2">Adding note to course ID: <strong>{courseId}</strong></p> */}
+          <h1 className="text-3xl font-bold text-foreground">Add Quiz</h1>
+          <p className="text-gray-600 mt-2">Adding quiz to course ID: <strong>{courseId}</strong></p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
-          {/* Note Title */}
+          {/* Quiz Title */}
           <div className="space-y-2">
             <Label htmlFor="title" className="text-foreground font-semibold">
-         Quizz Title
+              Quiz Title
             </Label>
             <Input
               id="title"
               name="title"
-              placeholder="e.g., Feedback on JavaScript Quiz 3"
+              placeholder="e.g., Quiz 2 - JavaScript Basics"
               value={formData.title}
               onChange={handleInputChange}
               className="bg-card border-input"
@@ -136,7 +135,7 @@ export default function AddQuizzPage() {
               id="documentUrl"
               name="documentUrl"
               type="url"
-              placeholder="https://example.com/quiz-feedback/js-quiz1.pdf"
+              placeholder="https://example.com/assignments/js-basics.pdf"
               value={formData.documentUrl}
               onChange={handleInputChange}
               className="bg-card border-input"
@@ -153,7 +152,7 @@ export default function AddQuizzPage() {
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-base"
               disabled={isLoading}
             >
-              {isLoading ? "Saving Note..." : "Add Note"}
+              {isLoading ? "Saving Quiz..." : "Add Quiz"}
             </Button>
           </div>
         </form>

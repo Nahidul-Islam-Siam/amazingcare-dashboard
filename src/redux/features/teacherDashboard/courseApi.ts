@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 import { baseApi } from "@/redux/api/baseApi";
 
@@ -151,11 +151,21 @@ addNotesById: build.mutation({
   invalidatesTags: ["courses"],
 }),
 
-AddQuizzPage: build.mutation({
+// In courseApi.ts
+addQuizzById: build.mutation({
   query: ({ courseId, quizData }) => ({
     url: `/quizzes/${courseId}`,
     method: "POST",
     body: quizData,
+  }),
+  invalidatesTags: ["courses"],
+}),
+
+addAssignmentById: build.mutation({
+  query: ({ courseId, assignmentData }) => ({
+    url: `/assignments/${courseId}`,
+    method: "POST",
+    body: assignmentData,
   }),
   invalidatesTags: ["courses"],
 }),
@@ -170,4 +180,4 @@ AddQuizzPage: build.mutation({
   }),
 });
 
-export const { useGetAllCoursesQuery, useGetMyCoursesQuery, useDeleteCourseMutation, useAddCourseMutation, useAddVideoLessonByIdMutation, useAddNotesByIdMutation, useAddQuizzPageMutation } = courseApi;
+export const { useGetAllCoursesQuery, useGetMyCoursesQuery, useDeleteCourseMutation, useAddCourseMutation, useAddVideoLessonByIdMutation, useAddNotesByIdMutation, useAddQuizzByIdMutation, useAddAssignmentByIdMutation } = courseApi;
