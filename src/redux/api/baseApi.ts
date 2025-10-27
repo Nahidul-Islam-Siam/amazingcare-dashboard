@@ -19,6 +19,7 @@ export const baseApi = createApi({
     "courses",
     "Auth",
     "dashboard",
+    "SubscriptionPlan"
 
   ],
   endpoints: () => ({}),

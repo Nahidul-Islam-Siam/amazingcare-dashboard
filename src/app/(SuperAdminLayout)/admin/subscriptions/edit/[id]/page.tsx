@@ -21,10 +21,9 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
-export default function AddSubscriptionPage() {
+export default function EditSubscriptionPage() {
   const router = useRouter();
   const [createPlan, { isLoading }] = useCreateSubscriptionPlanMutation();
-  
 
   const [formData, setFormData] = useState({
     subscriptionName: "",

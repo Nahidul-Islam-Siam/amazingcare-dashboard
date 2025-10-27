@@ -21,7 +21,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useGetAllSubscriptionPlansQuery } from "@/redux/features/superAdmin/subscriptionPlanApi";
+import { useDeleteSubscriptionPlanMutation, useGetAllSubscriptionPlansQuery } from "@/redux/features/superAdmin/subscriptionPlanApi";
+import TableSkeleton from "@/lib/Loader";
 
 // Define Subscription Plan Type (can be moved to types/)
 type SubscriptionPlan = {
@@ -38,47 +39,57 @@ type SubscriptionPlan = {
 
 export default function SubsCriptionPage() {
   const { data, isLoading, isError } = useGetAllSubscriptionPlansQuery({});
+  const [deleteSubscriptionPlan] = useDeleteSubscriptionPlanMutation();
   const [currentSubscription, setCurrentSubscription] = useState<SubscriptionPlan | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const subscriptionPlans: SubscriptionPlan[] = data?.data || [];
 
   // Handle Delete (Deny)
-  const handleDelete = async (id: string, name: string) => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: `You are about to delete "${name}" subscription plan?`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, delete it!",
-      cancelButtonText: "Cancel",
-      customClass: {
-        popup: "border-2 border-red-200 rounded-lg shadow-xl",
-        confirmButton: "bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-md",
-        cancelButton: "bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md",
-      },
-      buttonsStyling: false,
-    });
+ const handleDelete = async (id: string, name: string) => {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: `You are about to delete "${name}" subscription plan?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, delete it!",
+    cancelButtonText: "Cancel",
+    customClass: {
+      popup: "border-2 border-red-200 rounded-lg shadow-xl",
+      confirmButton: "bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-md",
+      cancelButton: "bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md",
+    },
+    buttonsStyling: false,
+  });
 
-    if (result.isConfirmed) {
-      try {
-        Swal.fire({
-          title: "Deleted!",
-          text: `Subscription "${name}" has been removed.`,
-          icon: "success",
-          timer: 1500,
-          showConfirmButton: false,
-        });
-      } catch (error) {
-        Swal.fire({
-          title: "Error!",
-          text: "Failed to delete subscription.",
-          icon: "error",
-        });
-      }
+  if (result.isConfirmed) {
+    try {
+      // ✅ Keep 'res' to capture the API response
+      const res = await deleteSubscriptionPlan({ id }).unwrap();
+
+      // Optionally: use res.data or res.message in success alert
+      Swal.fire({
+        title: "Deleted!",
+        text: `"${name}" subscription plan has been removed successfully.`,
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+        customClass: {
+          popup: "border-2 border-green-200 rounded-lg shadow-xl",
+        },
+      });
+    } catch (error) {
+      Swal.fire({
+        title: "Error!",
+        text: "Failed to delete subscription. Please try again.",
+        icon: "error",
+        customClass: {
+          popup: "border-2 border-red-200 rounded-lg shadow-xl",
+        },
+      });
     }
-  };
-
+  }
+};
   // Open Edit Modal (basic example)
   const openEditModal = (plan: SubscriptionPlan) => {
     Swal.fire({
@@ -217,7 +228,7 @@ export default function SubsCriptionPage() {
     );
   };
 
-  if (isLoading) return <div className="p-6 text-center">Loading subscription plans...</div>;
+  if (isLoading) return <TableSkeleton />;
   if (isError) return <div className="p-6 text-red-500 text-center">Failed to load subscription plans.</div>;
 
   return (
