@@ -18,7 +18,7 @@ export const baseApi = createApi({
     "User",
     "courses",
     "Auth",
-    "dashboard",
+    "Dashboard",
     "SubscriptionPlan"
 
   ],

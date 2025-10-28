@@ -85,6 +85,17 @@ export const subscriptionApi = baseApi.injectEndpoints({
       }),
       providesTags: ["SubscriptionPlan"], // Optional: useful if you edit/fetch single item
     }),
+
+
+
+    updateSubscriptionPlan: build.mutation<CreateSubscriptionPlanResponse, { id: string } & CreateSubscriptionPlanRequest>({
+  query: ({ id, ...body }) => ({
+    url: `/subscriptionPlan/plan/${id}`,
+    method: "PATCH",
+    body,
+  }),
+  invalidatesTags: ["SubscriptionPlan"],
+}),
   }),
 });
 
@@ -94,4 +105,5 @@ export const {
   useCreateSubscriptionPlanMutation,
   useDeleteSubscriptionPlanMutation,
   useGetSingleSubscriptionPlanQuery,
+  useUpdateSubscriptionPlanMutation,
 } = subscriptionApi;

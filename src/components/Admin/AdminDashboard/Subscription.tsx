@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -19,9 +18,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-// ✅ Add useUpdateSubscriptionPlanMutation
 import {
   useDeleteSubscriptionPlanMutation,
   useGetAllSubscriptionPlansQuery,
@@ -29,7 +26,6 @@ import {
 } from "@/redux/features/superAdmin/subscriptionPlanApi";
 import TableSkeleton from "@/lib/Loader";
 
-// Define Subscription Plan Type
 type SubscriptionPlan = {
   id: string;
   name: string;
@@ -45,7 +41,6 @@ type SubscriptionPlan = {
 export default function SubsCriptionPage() {
   const { data, isLoading, isError, refetch } = useGetAllSubscriptionPlansQuery({});
   const [deleteSubscriptionPlan] = useDeleteSubscriptionPlanMutation();
-  // ✅ Add update mutation
   const [updateSubscriptionPlan] = useUpdateSubscriptionPlanMutation();
 
   const [currentSubscription, setCurrentSubscription] = useState<SubscriptionPlan | null>(null);
@@ -56,12 +51,13 @@ export default function SubsCriptionPage() {
   // Handle Delete
   const handleDelete = async (id: string, name: string) => {
     const result = await Swal.fire({
-      title: "Are you sure?",
-      text: `You are about to delete "${name}" subscription plan?`,
+      title: "Confirm Deletion",
+      text: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, delete it!",
       cancelButtonText: "Cancel",
+      reverseButtons: true,
       customClass: {
         popup: "border-2 border-red-200 rounded-lg shadow-xl",
         confirmButton: "bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-md",
@@ -72,62 +68,90 @@ export default function SubsCriptionPage() {
 
     if (result.isConfirmed) {
       try {
-        const res = await deleteSubscriptionPlan({ id }).unwrap();
+        await deleteSubscriptionPlan({ id }).unwrap();
         Swal.fire({
           title: "Deleted!",
-          text: `"${name}" subscription plan has been removed successfully.`,
+          text: `Subscription "${name}" has been removed.`,
           icon: "success",
           timer: 1500,
           showConfirmButton: false,
-          customClass: {
-            popup: "border-2 border-green-200 rounded-lg shadow-xl",
-          },
+          timerProgressBar: true,
         });
-      } catch (error) {
+        refetch(); // Keep list updated
+      } catch (error: any) {
         Swal.fire({
-          title: "Error!",
-          text: "Failed to delete subscription. Please try again.",
+          title: "Error",
+          text: error?.data?.message || "Failed to delete subscription.",
           icon: "error",
-          customClass: {
-            popup: "border-2 border-red-200 rounded-lg shadow-xl",
-          },
         });
       }
     }
   };
 
-  // ✅ Open Edit Modal with Real API Update
+  // Open Edit Modal with Features Support
   const openEditModal = (plan: SubscriptionPlan) => {
     Swal.fire({
-      title: `Edit: ${plan.name}`,
-      html: `
-        <div class="text-left p-4 space-y-4">
+      title: "Edit Subscription Plan",
+      html: (
+        <div style={{ textAlign: "left", padding: "1rem" }} className="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-1">Name</label>
-            <input type="text" id="name" value="${plan.name}" class="w-full border border-gray-300 rounded px-3 py-2" />
+            <label className="block text-sm font-medium mb-1">Name</label>
+            <input
+              type="text"
+              id="name"
+              defaultValue={plan.name}
+              className="w-full border border-gray-300 rounded px-3 py-2"
+            />
           </div>
+
           <div>
-            <label class="block text-sm font-medium mb-1">Price (${plan.currency})</label>
-            <input type="number" id="price" step="0.01" value="${plan.price}" class="w-full border border-gray-300 rounded px-3 py-2" />
+            <label className="block text-sm font-medium mb-1">Price ({plan.currency})</label>
+            <input
+              type="number"
+              id="price"
+              step="0.01"
+              defaultValue={plan.price}
+              className="w-full border border-gray-300 rounded px-3 py-2"
+            />
           </div>
+
           <div>
-            <label class="block text-sm font-medium mb-1">Interval</label>
-            <select id="interval" class="w-full border border-gray-300 rounded px-3 py-2">
-              <option value="MONTHLY" ${plan.interval === "MONTHLY" ? "selected" : ""}>Monthly</option>
-              <option value="YEARLY" ${plan.interval === "YEARLY" ? "selected" : ""}>Yearly</option>
+            <label className="block text-sm font-medium mb-1">Interval</label>
+            <select
+              id="interval"
+              defaultValue={plan.interval}
+              className="w-full border border-gray-300 rounded px-3 py-2"
+            >
+              <option value="MONTHLY">Monthly</option>
+              <option value="YEARLY">Yearly</option>
             </select>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Features (one per line)</label>
+            <textarea
+              id="features"
+              defaultValue={plan.features.join("\n")}
+              rows={5}
+              className="w-full border border-gray-300 rounded px-3 py-2 font-mono text-sm"
+            />
+          </div>
         </div>
-      `,
+      ),
+      focusConfirm: false,
       showCancelButton: true,
       confirmButtonText: "Save Changes",
       cancelButtonText: "Cancel",
-      focusConfirm: false,
       preConfirm: () => {
         const name = (document.getElementById("name") as HTMLInputElement).value.trim();
         const priceStr = (document.getElementById("price") as HTMLInputElement).value;
         const price = parseFloat(priceStr);
         const interval = (document.getElementById("interval") as HTMLSelectElement).value as "MONTHLY" | "YEARLY";
+        const featuresRaw = (document.getElementById("features") as HTMLTextAreaElement).value;
+        const features = featuresRaw
+          .split("\n")
+          .map(feat => feat.trim())
+          .filter(feat => feat.length > 0);
 
         if (!name) {
           Swal.showValidationMessage("Please enter a valid name");
@@ -137,37 +161,38 @@ export default function SubsCriptionPage() {
           Swal.showValidationMessage("Please enter a valid price");
           return;
         }
+        if (features.length === 0) {
+          Swal.showValidationMessage("At least one feature is required");
+          return;
+        }
 
-        return { name, price, interval };
+        return { name, price, interval, features };
       },
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // ✅ Call API with real update
-          const res = await updateSubscriptionPlan({
+          await updateSubscriptionPlan({
             id: plan.id,
             name: result.value.name,
             price: result.value.price,
             interval: result.value.interval,
-            features: plan.features, // Keep existing features for now
+            features: result.value.features,
           }).unwrap();
 
-          // ✅ Use response message
           Swal.fire({
-            icon: "success",
             title: "Updated!",
-            text: res.message || `"${res.data?.name}" has been updated.`,
+            text: `"${result.value.name}" has been saved successfully.`,
+            icon: "success",
             timer: 1500,
             showConfirmButton: false,
           });
 
-          // ✅ Refresh list to reflect changes
-          refetch();
+          refetch(); // Sync UI
         } catch (error: any) {
           Swal.fire({
-            icon: "error",
             title: "Update Failed",
             text: error?.data?.message || "Could not save changes.",
+            icon: "error",
           });
         }
       }
@@ -217,7 +242,6 @@ export default function SubsCriptionPage() {
                 </svg>
               </div>
 
-              {/* Monthly / Yearly Toggle */}
               <div style={{ display: "flex", gap: "8px" }}>
                 <button
                   style={{
@@ -248,10 +272,8 @@ export default function SubsCriptionPage() {
               </div>
             </div>
 
-            {/* Title */}
             <h3 style={{ fontSize: "18px", margin: "0 0 10px 0", fontWeight: "bold" }}>{currentSubscription.name}</h3>
 
-            {/* Features */}
             <p style={{ fontSize: "14px", margin: "0 0 10px 0", textAlign: "left", lineHeight: "1.5" }}>
               Includes:<br />
               {currentSubscription.features.map((feat, i) => (
@@ -262,7 +284,6 @@ export default function SubsCriptionPage() {
               ))}
             </p>
 
-            {/* Price */}
             <div style={{ fontSize: "24px", fontWeight: "bold", marginTop: "20px" }}>
               {currentSubscription.price.toFixed(2)} {currentSubscription.currency}
             </div>
@@ -321,7 +342,7 @@ export default function SubsCriptionPage() {
             <table className="w-full">
               <thead>
                 <tr className="bg-blue-500 text-white">
-                  <th className="px-4 py-3 text-left text-sm font-semibold">ID</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">No.</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Price</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Interval</th>
@@ -355,7 +376,10 @@ export default function SubsCriptionPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-36">
                             <DropdownMenuItem onClick={() => openEditModal(plan)}>Edit</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDelete(plan.id, plan.name)} className="text-red-600">
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(plan.id, plan.name)}
+                              className="text-red-600"
+                            >
                               Delete
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openDetailsModal(plan)}>Details</DropdownMenuItem>

@@ -1,85 +1,62 @@
- 
+import { baseApi } from "@/redux/api/baseApi";
 
-// import { baseApi } from "@/redux/api/baseApi";
+// Define Interfaces
 
-// export interface CourseTeacher {
-//   id: string;
-//   firstName: string;
-// }
+export interface DashboardStats {
+  totalDonation: number;
+  totalCourses: number;
+  totalStudents: number;
+  totalTeachers: number;
+}
 
-// export interface CourseEnrollment {
-//   studentId: string;
-//   courseId: string;
-//   paymentId: string;
-// }
+export interface DailyDonation {
+  day: number;
+  amount: number;
+}
 
-// // Course interface for getAllCourses (with user, enrollment, isBuy)
-// export interface Course {
-//   id: string;
-//   name: string;
-//   description: string;
-//   thumbnailUrl: string;
-//   price: number;
-//   teacherId: string;
-//   level: string;
-//   sessionPrice: number;
-//   createdAt: string;
-//   updatedAt: string;
-//   videoCount: number;
-//   videoDuration: string;
-//   reviewCount: number;
-//   recommended: boolean;
-//   user: CourseTeacher;
-//   enrollment: CourseEnrollment[];
-//   isBuy: boolean;
-// }
+export interface Student {
+  id: string;
+  fullName: string;
+  email: string;
+  profileImage: string;
+}
 
-// // Course interface for getMyCourses (simplified version)
-// export interface MyCourse {
-//   id: string;
-//   name: string;
-//   description: string;
-//   thumbnailUrl: string;
-//   price: number;
-//   teacherId: string;
-//   teacherName: string;
-//   totalEnrollments: number;
-//   createdAt: string;
-// }
+export interface Teacher {
+  id: string;
+  fullName: string;
+  email: string;
+  profileImage: string;
+}
 
-// export interface CoursesMeta {
-//   page: number;
-//   limit: number;
-//   total: number;
-//   totalPage: number; // Added this based on the API response
-// }
+export interface DashboardData {
+  month: string;
+  dailyDonations: DailyDonation[];
+  students: Student[];
+  teachers: Teacher[];
+}
 
-// export interface GetAllCoursesResponse {
-//   success: boolean;
-//   message: string;
-//   meta: CoursesMeta;
-//   data: Course[];
-// }
+export interface DashboardResponse {
+  success: boolean;
+  message: string;
+  data: {
+    stats: DashboardStats;
+    data: DashboardData;
+  };
+}
 
-// // Response interface for getMyCourses
-// export interface GetMyCoursesResponse {
-//   success: boolean;
-//   message: string;
-//   meta: CoursesMeta;
-//   data: MyCourse[];
-// }
+// Enhanced API Slice
+export const dashboardApi = baseApi.injectEndpoints({
+  endpoints: (build) => ({
+    // ✅ Use query (not mutation) to fetch dashboard data
+    getDashboardData: build.query<DashboardResponse, void>({
+      query: () => ({
+        url: "/admin/stats",
+        method: "GET",
+      }),
+      providesTags: ["Dashboard"], // For cache invalidation later if needed
+    }),
+  }),
+});
 
-// export const dashboardApi = baseApi.injectEndpoints({
-//   endpoints: (build) => ({
-    
-// getDashBoardApi: build.mutation({
-//       query: () => ({
-//         url: `/courses/dashboard`,
-//         method: "GET",
-//       }),
-//         providesTags: ["dashboard"],
-//     }),
-//   }),
-// });
-
-// export const {   } = dashboardApi;
+// Export Hook
+export const { useGetDashboardDataQuery } = dashboardApi;

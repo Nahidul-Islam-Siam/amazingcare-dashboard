@@ -1,87 +1,127 @@
 "use client";
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 
+import TableSkeleton from "@/lib/Loader";
+import Image from "next/image";
+import { Teacher, useGetDashboardDataQuery } from "@/redux/features/superAdmin/dashboardApi";
+import { useState } from "react";
 
-// Mock Data — Matched to your image
-const donationData = [
-  { month: "1", amount: 70 },
-  { month: "2", amount: 60 },
-  { month: "3", amount: 110 },
-  { month: "4", amount: 75 },
-  { month: "5", amount: 70 },
-  { month: "6", amount: 80 },
-  { month: "7", amount: 45 },
-  { month: "8", amount: 65 },
-  { month: "9", amount: 90 },
-  { month: "10", amount: 80 },
-];
-
+// ✅ Fake Top Courses (unchanged)
 const topCourses = [
   { id: 1, title: "Faith", teacher: "Williams", lessons: 34, price: "$19" },
-  { id: 2, title: "Faith", teacher: "Williams", lessons: 34, price: "$19" },
-  { id: 3, title: "Faith", teacher: "Williams", lessons: 34, price: "$19" },
-  { id: 4, title: "Faith", teacher: "Williams", lessons: 34, price: "$19" },
-  { id: 5, title: "Faith", teacher: "Williams", lessons: 34, price: "$19" },
-  { id: 6, title: "Faith", teacher: "Williams", lessons: 34, price: "$19" },
-  { id: 7, title: "Faith", teacher: "Williams", lessons: 34, price: "$19" },
-  { id: 8, title: "Faith", teacher: "Williams", lessons: 34, price: "$19" },
-  { id: 9, title: "Faith", teacher: "Williams", lessons: 34, price: "$19" },
-  { id: 10, title: "Faith", teacher: "Williams", lessons: 34, price: "$19" },
-];
-
-const teachers = [
-  { id: 423, name: "Jenny Wilson", action: "Delete" },
-  { id: 708, name: "Cody Fisher", action: "Delete" },
-  { id: 556, name: "Albert Flores", action: "-" },
-];
-
-const students = [
-  { id: 45483, name: "Jaguar, Tomato", action: "Delete" },
-  { id: 98380, name: "Cody Fisher", action: "Delete" },
-  { id: 52152, name: "Mole, Persimmon", action: "-" },
+  { id: 2, title: "Grace", teacher: "Johnson", lessons: 28, price: "$25" },
+  { id: 3, title: "Hope", teacher: "Lee", lessons: 40, price: "$22" },
+  { id: 4, title: "Love", teacher: "Martinez", lessons: 36, price: "$20" },
+  { id: 5, title: "Peace", teacher: "Taylor", lessons: 30, price: "$18" },
 ];
 
 export default function DashboardPage() {
+  const { data, isLoading, isError } = useGetDashboardDataQuery();
+  const [teacherPage, setTeacherPage] = useState(1);
+  const [studentPage, setStudentPage] = useState(1);
+  const itemsPerPage = 3;
+
+  if (isLoading) return <TableSkeleton />;
+  if (isError)
+    return (
+      <div className="p-6 text-center text-red-500">
+        Failed to load dashboard data. Please try again later.
+      </div>
+    );
+
+  const dashboardStats = data?.data?.stats;
+  const dashboardData = data?.data?.data;
+
+  // ✅ Stats
+  const stats = {
+    totalDonation: dashboardStats?.totalDonation || 0,
+    totalCourses: dashboardStats?.totalCourses || 0,
+    totalStudents: dashboardStats?.totalStudents || 0,
+    totalTeachers: dashboardStats?.totalTeachers || 0,
+  };
+
+  // ✅ Chart Data
+  const donationChartData = dashboardData?.dailyDonations?.map((item) => ({
+    day: item.day,
+    amount: item.amount,
+  }));
+
+  // ✅ Teachers pagination
+  const teachers = dashboardData?.teachers || [];
+  const totalTeacherPages = Math.ceil(teachers.length / itemsPerPage);
+  const displayedTeachers = teachers.slice(
+    (teacherPage - 1) * itemsPerPage,
+    teacherPage * itemsPerPage
+  );
+
+  // ✅ Students pagination
+  const students = dashboardData?.students || [];
+  const totalStudentPages = Math.ceil(students.length / itemsPerPage);
+  const displayedStudents = students.slice(
+    (studentPage - 1) * itemsPerPage,
+    studentPage * itemsPerPage
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard overview</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
         <div className="flex items-center gap-2 text-gray-600">
           <Settings className="w-5 h-5" />
           <span>Admin</span>
         </div>
       </div>
 
-      {/* Stat Cards Row */}
+      {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
           {
             title: "Total Donations",
-            value: "$1248",
+            value: `$${stats.totalDonation.toLocaleString()}`,
             bg: "bg-blue-100",
             border: "border-blue-300",
           },
           {
             title: "Total Courses",
-            value: "68",
+            value: stats.totalCourses,
             bg: "bg-white",
             border: "border-gray-200",
           },
           {
             title: "Total Students",
-            value: "24",
+            value: stats.totalStudents,
             bg: "bg-white",
             border: "border-gray-200",
           },
           {
             title: "Total Teachers",
-            value: "12",
+            value: stats.totalTeachers,
             bg: "bg-white",
             border: "border-gray-200",
           },
@@ -95,21 +135,38 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Main Content Grid */}
+      {/* Donations Chart + Top Courses */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Donations Chart */}
         <div className="lg:col-span-1">
           <Card className="bg-blue-50 border-blue-300">
             <CardHeader>
-              <CardTitle className="text-gray-900 text-xl font-bold">Donations</CardTitle>
+              <CardTitle className="text-gray-900 text-xl font-bold">
+                Donations ({dashboardData?.month})
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={donationData}>
+                <BarChart data={donationChartData} barSize={10}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="month" stroke="#6b7280" tick={{ fontSize: 12 }} />
-                  <YAxis stroke="#6b7280" tick={{ fontSize: 12 }} />
+                  <XAxis
+                    dataKey="day"
+                    tickLine={false}
+                    axisLine={{ stroke: "#e2e8f0" }}
+                    tick={{ fontSize: 12 }}
+                    interval={2}
+                    ticks={[1, 5, 10, 15, 20, 25, 30]}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) =>
+                      value >= 1000 ? `${value / 1000}k` : value
+                    }
+                  />
                   <Tooltip
+                    formatter={(value: number) => [`$${value}`, "Amount"]}
                     contentStyle={{
                       backgroundColor: "#fff",
                       border: "1px solid #e2e8f0",
@@ -125,7 +182,7 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Top Courses Table */}
+        {/* Top Courses (Fake Data) */}
         <div className="lg:col-span-2">
           <Card className="bg-white border border-gray-200">
             <CardHeader>
@@ -137,14 +194,17 @@ export default function DashboardPage() {
                   <TableHeader>
                     <TableRow className="bg-blue-500 hover:bg-blue-500">
                       <TableHead className="text-white font-medium">Title</TableHead>
-                      <TableHead className="text-white font-medium">Teacher Name</TableHead>
-                      <TableHead className="text-white font-medium">No. of Lesson</TableHead>
+                      <TableHead className="text-white font-medium">Teacher</TableHead>
+                      <TableHead className="text-white font-medium">Lessons</TableHead>
                       <TableHead className="text-white font-medium">Price</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {topCourses.map((course) => (
-                      <TableRow key={course.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <TableRow
+                        key={course.id}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                      >
                         <TableCell className="py-3 text-gray-800">{course.title}</TableCell>
                         <TableCell className="py-3 text-gray-800">{course.teacher}</TableCell>
                         <TableCell className="py-3 text-gray-800">{course.lessons}</TableCell>
@@ -159,144 +219,156 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Bottom Section */}
+      {/* Teachers & Students */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Teachers Table */}
+        {/* Teachers */}
         <div className="lg:col-span-1">
           <Card className="bg-blue-50 border-blue-300">
             <CardHeader>
-              <CardTitle className="text-gray-900 text-xl font-bold">Teachers</CardTitle>
+              <CardTitle className="text-gray-900 text-xl font-bold">
+                Teachers ({teachers.length})
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-blue-500 hover:bg-blue-500">
-                      <TableHead className="text-white font-medium">Teacher ID</TableHead>
-                      <TableHead className="text-white font-medium">Teacher Name</TableHead>
-                      {/* <TableHead className="text-white font-medium">Action</TableHead> */}
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-blue-500">
+                    <TableHead className="text-white font-medium">ID</TableHead>
+                    <TableHead className="text-white font-medium">Name</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {displayedTeachers.map((teacher: Teacher) => (
+                    <TableRow key={teacher.id} className="hover:bg-gray-50">
+                      <TableCell className="py-3 text-sm text-gray-800">
+                        {teacher.id.slice(-6).toUpperCase()}
+                      </TableCell>
+                      <TableCell className="py-3 text-sm font-medium text-gray-800 flex items-center gap-2">
+                        {teacher.profileImage ? (
+                          <Image
+                            width={32}
+                            height={32}
+                            src={teacher.profileImage.trim()}
+                            alt={teacher.fullName}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium text-gray-600">
+                            {teacher.fullName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </div>
+                        )}
+                        {teacher.fullName}
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {teachers.map((teacher) => (
-                      <TableRow key={teacher.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <TableCell className="py-3 text-gray-800">{teacher.id}</TableCell>
-                        <TableCell className="py-3 text-gray-800">{teacher.name}</TableCell>
-                        {/* <TableCell className="py-3 text-center">
-                          {teacher.action === "Delete" ? (
-                            <button
-                              onClick={() => {
-                                import("sweetalert2").then(({ default: Swal }) => {
-                                  Swal.fire({
-                                    title: "Are you sure?",
-                                    text: `Do you want to delete Teacher #${teacher.id}?`,
-                                    icon: "warning",
-                                    showCancelButton: true,
-                                    confirmButtonText: "Yes, delete it!",
-                                    cancelButtonText: "Cancel",
-                                    confirmButtonColor: "#E20000",
-                                    reverseButtons: true,
-                                    customClass: {
-                                      popup: "border-2 border-red-100 rounded-lg shadow-xl",
-                                      confirmButton: "bg-red-600 hover:bg-red-700",
-                                    },
-                                  }).then((result) => {
-                                    if (result.isConfirmed) {
-                                      Swal.fire({
-                                        icon: "success",
-                                        title: "Deleted!",
-                                        text: `Teacher #${teacher.id} has been deleted.`,
-                                        timer: 2000,
-                                        timerProgressBar: true,
-                                        showConfirmButton: false,
-                                      });
-                                    }
-                                  });
-                                });
-                              }}
-                              className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors"
-                            >
-                              Delete
-                            </button>
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
-                        </TableCell> */}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Pagination */}
+              {totalTeacherPages > 1 && (
+                <div className="flex justify-between items-center mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTeacherPage((p) => Math.max(p - 1, 1))}
+                    disabled={teacherPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-gray-700">
+                    Page {teacherPage} of {totalTeacherPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTeacherPage((p) => Math.min(p + 1, totalTeacherPages))}
+                    disabled={teacherPage === totalTeacherPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Students Table */}
+        {/* Students */}
         <div className="lg:col-span-2">
           <Card className="bg-blue-50 border-blue-300">
             <CardHeader>
-              <CardTitle className="text-gray-900 text-xl font-bold">Students</CardTitle>
+              <CardTitle className="text-gray-900 text-xl font-bold">
+                Students ({students.length})
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-blue-500 hover:bg-blue-500">
-                      <TableHead className="text-white font-medium">Student ID</TableHead>
-                      <TableHead className="text-white font-medium">Student Name</TableHead>
-                      {/* <TableHead className="text-white font-medium">Action</TableHead> */}
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-blue-500">
+                    <TableHead className="text-white font-medium">ID</TableHead>
+                    <TableHead className="text-white font-medium">Name</TableHead>
+                    <TableHead className="text-white font-medium">Email</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {displayedStudents.map((student) => (
+                    <TableRow key={student.id} className="hover:bg-gray-50">
+                      <TableCell className="py-3 text-sm text-gray-800">
+                        {student.id.slice(-6).toUpperCase()}
+                      </TableCell>
+                      <TableCell className="py-3 text-sm font-medium text-gray-800 flex items-center gap-2">
+                        {student.profileImage ? (
+                          <Image
+                            width={32}
+                            height={32}
+                            src={student.profileImage.trim()}
+                            alt={student.fullName}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-medium text-gray-600">
+                            {student.fullName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </div>
+                        )}
+                        {student.fullName}
+                      </TableCell>
+                      <TableCell className="py-3 text-sm text-gray-600">
+                        {student.email}
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {students.map((student) => (
-                      <TableRow key={student.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <TableCell className="py-3 text-gray-800">{student.id}</TableCell>
-                        <TableCell className="py-3 text-gray-800">{student.name}</TableCell>
-                        {/* <TableCell className="py-3 text-center">
-                          {student.action === "Delete" ? (
-                            <button
-                              onClick={() => {
-                                import("sweetalert2").then(({ default: Swal }) => {
-                                  Swal.fire({
-                                    title: "Are you sure?",
-                                    text: `Do you want to delete Student #${student.id}?`,
-                                    icon: "warning",
-                                    showCancelButton: true,
-                                    confirmButtonText: "Yes, delete it!",
-                                    cancelButtonText: "Cancel",
-                                    confirmButtonColor: "#E20000",
-                                    reverseButtons: true,
-                                    customClass: {
-                                      popup: "border-2 border-red-100 rounded-lg shadow-xl",
-                                      confirmButton: "bg-red-600 hover:bg-red-700",
-                                    },
-                                  }).then((result) => {
-                                    if (result.isConfirmed) {
-                                      Swal.fire({
-                                        icon: "success",
-                                        title: "Deleted!",
-                                        text: `Student #${student.id} has been deleted.`,
-                                        timer: 2000,
-                                        timerProgressBar: true,
-                                        showConfirmButton: false,
-                                      });
-                                    }
-                                  });
-                                });
-                              }}
-                              className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors"
-                            >
-                              Delete
-                            </button>
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
-                        </TableCell> */}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Pagination */}
+              {totalStudentPages > 1 && (
+                <div className="flex justify-between items-center mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setStudentPage((p) => Math.max(p - 1, 1))}
+                    disabled={studentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-gray-700">
+                    Page {studentPage} of {totalStudentPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setStudentPage((p) => Math.min(p + 1, totalStudentPages))}
+                    disabled={studentPage === totalStudentPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
