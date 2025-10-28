@@ -1,7 +1,7 @@
 "use client";
 
 import type * as React from "react";
-import { LayoutDashboard, GraduationCap, Video, Users, BarChart3, CreditCard, HandCoins } from "lucide-react";
+import { LayoutDashboard, GraduationCap, Video, Users, BarChart3, CreditCard, HandCoins, ListVideo } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
 import { TeamSwitcher } from "@/components/team-switcher";
@@ -62,6 +62,11 @@ const data = {
       url: "/admin/donations",
       icon: HandCoins, // 🤲 Matches the image
     },
+    {
+      title: "Live",
+      url: "/admin/live",
+      icon: ListVideo, // 💳 Matches the image
+    }
   ],
 };
 

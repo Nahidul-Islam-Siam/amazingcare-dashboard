@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Swal from "sweetalert2";
 import { useState } from "react";
 import { useGetDonationListQuery } from "@/redux/features/superAdmin/donationApi";
+import TableSkeleton from "@/lib/Loader";
 
 export default function DonationPage() {
   const [page, setPage] = useState(1);
@@ -15,7 +16,7 @@ export default function DonationPage() {
   const { data, error, isLoading } = useGetDonationListQuery({ page, limit });
 
   if (isLoading) {
-    return <div className="p-6 text-gray-500">Loading donations...</div>;
+    return <TableSkeleton />;
   }
 
   if (error || !data?.success) {

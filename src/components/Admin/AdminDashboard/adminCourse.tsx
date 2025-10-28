@@ -2,17 +2,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+
 import { MoreHorizontal } from "lucide-react";
 import Swal from 'sweetalert2';
 import { useDeleteCourseMutation, useGetAllCoursesQuery } from "@/redux/features/teacherDashboard/courseApi";
 import { useState } from "react";
+import TableSkeleton from "@/lib/Loader";
 
 export default function AdminCoursesPage() {
   const [page, setPage] = useState(1);
   const limit = 10;
 
-  // Fetch real courses
   const { data, isLoading, isError } = useGetAllCoursesQuery({
     page,
     limit,
@@ -34,9 +34,7 @@ export default function AdminCoursesPage() {
   // Show loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
-        <p className="text-lg text-gray-600">Loading courses...</p>
-      </div>
+      <TableSkeleton  />
     );
   }
 
