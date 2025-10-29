@@ -24,7 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
+// import { Settings } from "lucide-react";
 
 import TableSkeleton from "@/lib/Loader";
 import Image from "next/image";
@@ -92,10 +92,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
-        <div className="flex items-center gap-2 text-gray-600">
-          <Settings className="w-5 h-5" />
-          <span>Admin</span>
-        </div>
+ 
       </div>
 
       {/* Stat Cards */}
@@ -200,9 +197,9 @@ export default function DashboardPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {topCourses.map((course) => (
+                    {topCourses.map((course, index) => (
                       <TableRow
-                        key={course.id}
+                        key={index+1 }
                         className="border-b border-gray-100 hover:bg-gray-50"
                       >
                         <TableCell className="py-3 text-gray-800">{course.title}</TableCell>
@@ -238,10 +235,10 @@ export default function DashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {displayedTeachers.map((teacher: Teacher) => (
+                  {displayedTeachers.map((teacher: Teacher, index) => (
                     <TableRow key={teacher.id} className="hover:bg-gray-50">
                       <TableCell className="py-3 text-sm text-gray-800">
-                        {teacher.id.slice(-6).toUpperCase()}
+                        {index +1}
                       </TableCell>
                       <TableCell className="py-3 text-sm font-medium text-gray-800 flex items-center gap-2">
                         {teacher.profileImage ? (
@@ -313,10 +310,10 @@ export default function DashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {displayedStudents.map((student) => (
+                  {displayedStudents.map((student, index) => (
                     <TableRow key={student.id} className="hover:bg-gray-50">
                       <TableCell className="py-3 text-sm text-gray-800">
-                        {student.id.slice(-6).toUpperCase()}
+                        {index +1}
                       </TableCell>
                       <TableCell className="py-3 text-sm font-medium text-gray-800 flex items-center gap-2">
                         {student.profileImage ? (

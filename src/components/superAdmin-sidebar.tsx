@@ -63,8 +63,8 @@ const data = {
       icon: HandCoins, // 🤲 Matches the image
     },
     {
-      title: "Live",
-      url: "/admin/live",
+      title: "Teacher-Live",
+      url: "/admin/teacher",
       icon: ListVideo, // 💳 Matches the image
     }
   ],

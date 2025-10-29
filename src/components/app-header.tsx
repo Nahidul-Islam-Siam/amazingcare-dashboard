@@ -16,9 +16,14 @@ import { logout } from "@/redux/features/auth/authSlice";
 import { useRouter } from "next/navigation";
 import { useGetProfileQuery } from "@/redux/features/auth/authApi";
 import { UserProfile } from "@/redux/features/auth/authApi"; // import the interface
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 const AppHeader = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const role = useSelector((state: RootState) => state?.auth.user?.role);
+  console.log(role,"asdfasdfas");
+  
   const dispatch = useAppDispatch();
   const router = useRouter();
 
@@ -60,7 +65,7 @@ const AppHeader = () => {
 
   // If you want to eventually display the real role (if returned from profile API)
   // For now, use a placeholder
-  const role = "Teacher"; // or use user?.role if added in profile later
+   // or use user?.role if added in profile later
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b bg-white px-4 shadow-sm">

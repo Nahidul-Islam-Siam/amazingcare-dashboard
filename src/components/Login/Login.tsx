@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -56,13 +57,15 @@ const onSubmit = async (data: any) => {
         throw new Error("Invalid token");
       }
 
+
+
       dispatch(
         setAuthData({
           token,
           user: {
             id: userId,
             email: (decoded as any).email,
-            role,
+            role:decoded ? (decoded as any).role : role,
           },
         })
       );

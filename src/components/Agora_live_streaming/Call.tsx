@@ -1,6 +1,8 @@
 // src/components/Agora_live_streaming/Call.tsx
 "use client";
 
+import { useEffect, useState } from "react";
+import AgoraRTC, { ILocalAudioTrack, ILocalVideoTrack } from "agora-rtc-sdk-ng";
 import {
   AgoraRTCProvider,
   useRTCClient,
@@ -14,9 +16,6 @@ import {
   RemoteUser,
   IAgoraRTCClient,
 } from "agora-rtc-react";
-import AgoraRTC from "agora-rtc-sdk-ng";
-import { useEffect, useState } from "react";
-import VideosWithControls from "./VideoWithControls";
 
 interface CallProps {
   appId: string;
@@ -25,61 +24,56 @@ interface CallProps {
 }
 
 export default function Call({ appId, channelName, role = "host" }: CallProps) {
-  // ✅ Create Agora client
+  // 1️⃣ Create Agora client explicitly with VP8
   const client = useRTCClient(
-    AgoraRTC.createClient({ codec: "vp8", mode: "live" }) as unknown as IAgoraRTCClient
+    AgoraRTC.createClient({ mode: "live", codec: "vp8" }) as unknown as IAgoraRTCClient
   );
 
-  // ✅ Set client role and cleanup
+  // 2️⃣ Set host role on mount
   useEffect(() => {
     if (!client) return;
-    client.setClientRole(role);
-    console.log(`🎭 Agora client role set to: ${role}`);
+    client.setClientRole(role).then(() => console.log(`🎭 Role set: ${role}`));
 
     return () => {
-      client.leave().then(() => console.log("👋 Left Agora channel"));
+      client.leave().then(() => console.log("👋 Left channel"));
     };
   }, [client, role]);
 
   return (
     <AgoraRTCProvider client={client}>
-      <VideosWithControls appId={appId} channelName={channelName} role={role} />
+      <Videos appId={appId} channelName={channelName} role={role} />
     </AgoraRTCProvider>
   );
 }
 
-export function Videos({
-  appId,
-  channelName,
-  role,
-}: {
-  appId: string;
-  channelName: string;
-  role: "host" ;
-}) {
+function Videos({ appId, channelName, role }: { appId: string; channelName: string; role: "host" }) {
   const [isReady, setIsReady] = useState(false);
 
-  const { isLoading: loadingMic, localMicrophoneTrack } = useLocalMicrophoneTrack();
-  const { isLoading: loadingCam, localCameraTrack } = useLocalCameraTrack();
+  const { isLoading: micLoading, localMicrophoneTrack } = useLocalMicrophoneTrack();
+  const { isLoading: camLoading, localCameraTrack } = useLocalCameraTrack();
 
   const remoteUsers = useRemoteUsers();
   const { audioTracks } = useRemoteAudioTracks(remoteUsers);
 
-  // ✅ Host publishes tracks
-  usePublish(role === "host" ? [localMicrophoneTrack, localCameraTrack] : []);
+  // Wait until tracks are ready before publishing
+  useEffect(() => {
+    if (!micLoading && !camLoading) setIsReady(true);
+  }, [micLoading, camLoading]);
 
   // ✅ Join channel
   useJoin({ appid: appId, channel: channelName, token: null });
 
-  // ✅ Play remote audio
+  // ✅ Publish tracks once ready and if host
+  usePublish(
+    role === "host" && isReady && localMicrophoneTrack && localCameraTrack
+      ? [localMicrophoneTrack, localCameraTrack]
+      : []
+  );
+
+  // Play remote audio automatically
   useEffect(() => {
     audioTracks.forEach((track) => track.play());
   }, [audioTracks]);
-
-  // ✅ Wait for devices
-  useEffect(() => {
-    if (!loadingMic && !loadingCam) setIsReady(true);
-  }, [loadingMic, loadingCam]);
 
   if (!isReady) {
     return (
@@ -108,20 +102,12 @@ export function Videos({
       >
         {/* Host video */}
         {role === "host" && localCameraTrack && (
-          <LocalVideoTrack
-            track={localCameraTrack}
-            play
-            className="w-full h-full object-cover rounded-xl"
-          />
+          <LocalVideoTrack track={localCameraTrack} play className="w-full h-full object-cover rounded-xl" />
         )}
 
         {/* Remote users */}
         {remoteUsers.map((user) => (
-          <RemoteUser
-            key={user.uid}
-            user={user}
-            className="w-full h-full object-cover rounded-xl"
-          />
+          <RemoteUser key={user.uid} user={user} className="w-full h-full object-cover rounded-xl" />
         ))}
       </div>
     </div>

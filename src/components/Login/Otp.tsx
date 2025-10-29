@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import logo from "@/assets/logo/Logo.png";
 import bg from "@/assets/logo/login-bg.png";
-import Link from "next/link";
+// import Link from "next/link";
 
 const EnterOTP = () => {
   const [otp, setOtp] = useState(['', '', '', '']);

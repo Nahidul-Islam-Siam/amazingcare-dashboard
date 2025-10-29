@@ -179,9 +179,9 @@ export default function CoursesPage() {
                   </td>
                 </tr>
               ) : (
-                filteredCourses.map((course: any) => (
+                filteredCourses.map((course: any, index) => (
                   <tr
-                    key={course.id}
+                    key={index +1}
                     className="border-t hover:bg-gray-50 transition-colors"
                   >
                     <td className="px-4 py-3 font-medium break-words">{course.name}</td>
