@@ -50,69 +50,87 @@ const Login = () => {
   const dispatch = useDispatch();
   const router = useRouter();
 
-  const onSubmit = async (data: any) => {
-    setLoading(true);
-    try {
-      const res = await login(data).unwrap();
+const onSubmit = async (data: any) => {
+  setLoading(true);
 
-      if (res?.success) {
-        const { token, role: serverRole, userId } = res.data;
+  try {
+    const res = await login(data).unwrap();
+    console.log(res);
 
-        let decoded: DecodedToken;
-        try {
-          decoded = jwtDecode(token);
-        } catch {
-          throw new Error("Invalid token");
-        }
+    if (res?.success) {
+      const { token, role: serverRole, userId } = res.data;
 
-        // Optional: check token expiration client-side
-        const now = Date.now() / 1000;
-        if (decoded.exp < now) {
-          throw new Error("Token expired");
-        }
-
-        // Dispatch auth to Redux
-        dispatch(
-          setAuthData({
-            token,
-            user: {
-              id: userId || decoded.id,
-              email: decoded.email,
-              role: decoded.role || serverRole,
-            },
-          })
-        );
-
-        // Set cookies with path "/"
-        Cookies.set("token", token, { expires: 7, path: "/" });
-        Cookies.set("role", decoded.role || serverRole, { expires: 7, path: "/" });
-
-        await Swal.fire({
-          icon: "success",
-          title: "Logged In!",
-          text: "Redirecting...",
-          timer: 1000,
-          showConfirmButton: false,
-        });
-
-        // Normalize role for redirect
-        const normalizedRole = (decoded.role || serverRole).toUpperCase();
-        if (normalizedRole === "ADMIN" || normalizedRole === "SUPER_ADMIN") {
-          router.replace("/admin");
-        } else if (normalizedRole === "TEACHER") {
-          router.replace("/dashboard");
-        } else {
-          router.replace("/");
-        }
-      } else {
-        Swal.fire("Login Failed", res.message || "Unknown error", "error");
+      // Decode JWT
+      let decoded: DecodedToken;
+      try {
+        decoded = jwtDecode(token);
+        console.log(decoded);
+      } catch {
+        throw new Error("Invalid token");
       }
-    } catch (error) {
-      Swal.fire("Error", "Invalid credentials or server error.", "error");
-    } finally {
-      setLoading(false);
+
+      // Check token expiration
+      const now = Date.now() / 1000;
+      if (decoded.exp < now) {
+        throw new Error("Token expired");
+      }
+
+      // ✅ Save to Redux (FULL user data)
+      dispatch(
+        setAuthData({
+          token: token,
+          user: {
+            id: userId || decoded.id,
+            email: decoded.email,
+            role: decoded.role || serverRole,
+            fullName: res.data.userName,
+            phoneNumber: res.data.phoneNumber || null,
+            country: res.data.country || null,
+            status: res.data.status || null,
+            profileImage: res.data.profileImage || null,
+            isProfileComplete: res.data.isProfileComplete || false,
+            token: token,
+          },
+        })
+      );
+
+      // ✅ Save cookies
+      Cookies.set("access_token", token, { expires: 7 });
+      Cookies.set("role", decoded.role || serverRole, { expires: 7 });
+      Cookies.set("email", decoded.email, { expires: 7 });
+      Cookies.set("fullName", res.data.userName, { expires: 7 });
+
+      // Success popup
+      await Swal.fire({
+        icon: "success",
+        title: "Logged In!",
+        text: "Redirecting...",
+        timer: 1000,
+        showConfirmButton: false,
+      });
+
+      // ✅ Redirect based on role
+      const normalizedRole = (decoded.role || serverRole).toUpperCase();
+
+      if (normalizedRole === "ADMIN" || normalizedRole === "SUPER_ADMIN") {
+        router.replace("/admin");
+      } else if (normalizedRole === "TEACHER") {
+        router.replace("/dashboard");
+      } else {
+        router.replace("/");
+      }
+
+    } else {
+      Swal.fire("Login Failed", res.message || "Unknown error", "error");
     }
-  };
+
+  } catch (error) {
+    Swal.fire("Error", "Invalid credentials or server error.", "error");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-white flex relative">

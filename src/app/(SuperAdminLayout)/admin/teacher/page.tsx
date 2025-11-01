@@ -1,4 +1,4 @@
-// src/app/(DashboardLayout)/dashboard/teacher/page.tsx
+// src/app/(DashboardLayout)/admin/teacher/page.tsx
 'use client'
  
 import { useRouter } from 'next/navigation'
@@ -50,7 +50,7 @@ export default function TeacherDashboard() {
         <div className="text-center">
           <button
             type="submit"
-            className="inline-flex cursor-pointer items-center justify-center px-6 py-3 mt-4 text-base font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:ring-4 focus:ring-blue-300"
+            className="inline-flex items-center justify-center px-6 py-3 mt-4 text-base font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:ring-4 focus:ring-blue-300"
           >
             Start Session
           </button>

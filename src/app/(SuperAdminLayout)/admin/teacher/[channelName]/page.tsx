@@ -1,6 +1,5 @@
 // src/app/(DashboardLayout)/dashboard/teacher/[channelName]/page.tsx
 'use client'
-
 import Call from "@/components/Agora_live_streaming/Call"
 import { useParams } from "next/navigation"
  

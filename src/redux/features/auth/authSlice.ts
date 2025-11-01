@@ -20,8 +20,8 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-  token: null,
-  user: null,
+  token: Cookies.get("token") || null,
+  user: null, // will be restored from login or cookies
 };
 
 const authSlice = createSlice({
@@ -30,23 +30,43 @@ const authSlice = createSlice({
   reducers: {
     setToken: (state, action: PayloadAction<string>) => {
       state.token = action.payload;
-      Cookies.set("access_token", action.payload, { expires: 7 });
+      Cookies.set("token", action.payload, { expires: 7 });
     },
+
     setUser: (state, action: PayloadAction<User>) => {
-      state.user = action.payload;
+      const roleFromCookie = Cookies.get("role");
+      state.user = {
+        ...action.payload,
+        role: action.payload.role || roleFromCookie || "", // ✅ fallback
+      };
     },
+
     setAuthData: (
       state,
       action: PayloadAction<{ token: string; user: User }>
     ) => {
-      state.token = action.payload.token;
-      state.user = action.payload.user;
-      Cookies.set("access_token", action.payload.token, { expires: 7 });
+      const { token, user } = action.payload;
+
+      // ✅ Always save token
+      state.token = token;
+      Cookies.set("token", token, { expires: 7 });
+
+      // ✅ Save role in cookie for fallback after refresh
+      const finalRole = user.role || Cookies.get("role") || "";
+      Cookies.set("role", finalRole, { expires: 7 });
+
+      // ✅ Save user with fallback role
+      state.user = {
+        ...user,
+        role: finalRole,
+      };
     },
+
     logout: (state) => {
       state.token = null;
       state.user = null;
-      Cookies.remove("access_token");
+      Cookies.remove("token");
+      Cookies.remove("role");
     },
   },
 });

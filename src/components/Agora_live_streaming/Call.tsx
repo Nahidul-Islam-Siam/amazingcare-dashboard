@@ -1,80 +1,108 @@
 // src/components/Agora_live_streaming/Call.tsx
 "use client";
-
-import { useEffect, useState } from "react";
-import AgoraRTC, { ILocalAudioTrack, ILocalVideoTrack } from "agora-rtc-sdk-ng";
+ 
 import {
   AgoraRTCProvider,
-  useRTCClient,
-  useLocalCameraTrack,
-  useLocalMicrophoneTrack,
-  usePublish,
-  useJoin,
-  useRemoteAudioTracks,
-  useRemoteUsers,
   LocalVideoTrack,
   RemoteUser,
-  IAgoraRTCClient,
+  useRTCClient,
+  useJoin,
+  usePublish,
+  useLocalCameraTrack,
+  useLocalMicrophoneTrack,
+  useRemoteAudioTracks,
+  useRemoteUsers,
+  IAgoraRTCClient, // ✅ we’ll use this type
 } from "agora-rtc-react";
-
+import AgoraRTCSDK from "agora-rtc-sdk-ng"; // ✅ import the SDK itself
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import VideosWithControls from "./VideoWithControls";
+ 
 interface CallProps {
   appId: string;
   channelName: string;
-  role?: "host";
+  role?: "host" | "audience"; // teacher = host, student = audience
 }
-
-export default function Call({ appId, channelName, role = "host" }: CallProps) {
-  // 1️⃣ Create Agora client explicitly with VP8
-  const client = useRTCClient(
-    AgoraRTC.createClient({ mode: "live", codec: "vp8" }) as unknown as IAgoraRTCClient
-  );
-
-  // 2️⃣ Set host role on mount
+ 
+export default function Call({
+  appId,
+  channelName,
+  role = "host",
+}: CallProps) {
+  // ✅ Client created using Agora from agora-rtc-react (no type conflict)
+// ✅ Typecast the client to match agora-rtc-react expectations
+const client = useRTCClient(
+  AgoraRTCSDK.createClient({ codec: "vp8", mode: "live" }) as unknown as IAgoraRTCClient
+);
+ 
+ 
+  // ✅ Assign teacher/student role
   useEffect(() => {
-    if (!client) return;
-    client.setClientRole(role).then(() => console.log(`🎭 Role set: ${role}`));
-
-    return () => {
-      client.leave().then(() => console.log("👋 Left channel"));
-    };
+    client.setClientRole(role);
   }, [client, role]);
-
+ 
   return (
     <AgoraRTCProvider client={client}>
-      <Videos appId={appId} channelName={channelName} role={role} />
+<VideosWithControls appId={appId} channelName={channelName} role={role} />
+ 
+ 
+      {/* End Call Button */}
+      <div className="fixed z-10 bottom-0 left-0 right-0 flex justify-center pb-4">
+        <Link
+          href="/dashboard/teacher"
+          className="px-5 py-3 text-base font-medium text-center text-white bg-red-500 rounded-lg hover:bg-red-600 focus:ring-4 focus:ring-red-300 dark:focus:ring-red-900 w-40"
+        >
+          End Call
+        </Link>
+      </div>
     </AgoraRTCProvider>
   );
 }
-
-function Videos({ appId, channelName, role }: { appId: string; channelName: string; role: "host" }) {
+ 
+function Videos({
+  appId,
+  channelName,
+  role,
+}: {
+  appId: string;
+  channelName: string;
+  role: "host" | "audience";
+}) {
   const [isReady, setIsReady] = useState(false);
-
-  const { isLoading: micLoading, localMicrophoneTrack } = useLocalMicrophoneTrack();
-  const { isLoading: camLoading, localCameraTrack } = useLocalCameraTrack();
-
+ 
+  // 🎤 & 🎥 setup
+  const { isLoading: isLoadingMic, localMicrophoneTrack } =
+    useLocalMicrophoneTrack();
+  const { isLoading: isLoadingCam, localCameraTrack } = useLocalCameraTrack();
+ 
   const remoteUsers = useRemoteUsers();
   const { audioTracks } = useRemoteAudioTracks(remoteUsers);
-
-  // Wait until tracks are ready before publishing
-  useEffect(() => {
-    if (!micLoading && !camLoading) setIsReady(true);
-  }, [micLoading, camLoading]);
-
-  // ✅ Join channel
-  useJoin({ appid: appId, channel: channelName, token: null });
-
-  // ✅ Publish tracks once ready and if host
+ 
+  // ✅ Host publishes camera + mic
   usePublish(
-    role === "host" && isReady && localMicrophoneTrack && localCameraTrack
-      ? [localMicrophoneTrack, localCameraTrack]
-      : []
+    role === "host" ? [localMicrophoneTrack, localCameraTrack] : []
   );
-
-  // Play remote audio automatically
+ 
+  // ✅ Join the channel
+  useJoin({
+    appid: appId,
+    channel: channelName,
+    token: null,
+  });
+ 
+  // ✅ Play remote audio
   useEffect(() => {
     audioTracks.forEach((track) => track.play());
   }, [audioTracks]);
-
+ 
+  // ✅ Wait until devices are ready
+  useEffect(() => {
+    if (!isLoadingMic && !isLoadingCam) {
+      setIsReady(true);
+    }
+  }, [isLoadingMic, isLoadingCam]);
+ 
   if (!isReady) {
     return (
       <div className="flex flex-col items-center justify-center h-screen text-gray-600">
@@ -82,9 +110,9 @@ function Videos({ appId, channelName, role }: { appId: string; channelName: stri
       </div>
     );
   }
-
+ 
   const unit = "minmax(0, 1fr) ";
-
+ 
   return (
     <div className="flex flex-col justify-between w-full h-screen p-2 bg-black">
       <div
@@ -100,14 +128,22 @@ function Videos({ appId, channelName, role }: { appId: string; channelName: stri
               : unit,
         }}
       >
-        {/* Host video */}
+        {/* Host (Teacher) Video */}
         {role === "host" && localCameraTrack && (
-          <LocalVideoTrack track={localCameraTrack} play className="w-full h-full object-cover rounded-xl" />
+          <LocalVideoTrack
+            track={localCameraTrack}
+            play
+            className="w-full h-full object-cover rounded-xl"
+          />
         )}
-
-        {/* Remote users */}
+ 
+        {/* Remote (Students) */}
         {remoteUsers.map((user) => (
-          <RemoteUser key={user.uid} user={user} className="w-full h-full object-cover rounded-xl" />
+          <RemoteUser
+            key={user.uid}
+            user={user}
+            className="w-full h-full object-cover rounded-xl"
+          />
         ))}
       </div>
     </div>
