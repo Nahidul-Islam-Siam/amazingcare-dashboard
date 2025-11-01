@@ -22,8 +22,8 @@ export default function TeacherChannelPage() {
         {channelName}
       </p>
  
-      {/* Agora Call Component */}
-      <Call appId={appId} channelName={channelName} />
+      {/* Agora Call Component - Always host for teachers, role is locked */}
+      <Call appId={appId} channelName={channelName} role="host" lockRole={true} />
     </main>
   )
 }
