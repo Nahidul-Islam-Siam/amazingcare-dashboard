@@ -1,4 +1,4 @@
-// src/app/(DashboardLayout)/dashboard/teacher/[channelName]/page.tsx
+// / src/app/(DashboardLayout)/dashboard/teacher/[channelName]/page.tsx
 'use client'
 import Call from "@/components/Agora_live_streaming/Call"
 import { useParams } from "next/navigation"
@@ -22,8 +22,9 @@ export default function TeacherChannelPage() {
         {channelName}
       </p>
  
-      {/* Agora Call Component - Always host for teachers, role is locked */}
-      <Call appId={appId} channelName={channelName} role="host" lockRole={true} />
+      {/* Agora Call Component */}
+      <Call appId={appId} channelName={channelName} />
     </main>
   )
 }
+ 

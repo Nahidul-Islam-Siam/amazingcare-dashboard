@@ -1,4 +1,4 @@
-// src/app/(DashboardLayout)/admin/teacher/page.tsx
+// src/app/(DashboardLayout)/dashboard/teacher/page.tsx
 'use client'
  
 import { useRouter } from 'next/navigation'
@@ -63,3 +63,5 @@ export default function TeacherDashboard() {
     </div>
   )
 }
+ 
+ 
