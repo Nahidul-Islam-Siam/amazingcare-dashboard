@@ -1,6 +1,6 @@
-# Agora Live Streaming Setup Guide
+# Agora Video Calling & Live Streaming Setup Guide
 
-This guide will help you set up and use Agora live streaming in your Next.js application.
+This guide will help you set up and use Agora video calling and live streaming in your Next.js application.
 
 ## Prerequisites
 
@@ -26,7 +26,32 @@ NEXT_PUBLIC_AGORA_APP_ID=your_app_id_here
 
 ## Usage
 
-### Host/Teacher Component
+### Video Calling Mode (Peer-to-Peer) - Default
+
+For video calls where all participants can share video and audio:
+
+```tsx
+import Call from "@/components/Agora_live_streaming/Call";
+
+export default function VideoCallPage() {
+  const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID || "";
+  const channelName = "my-video-call";
+
+  return (
+    <Call 
+      appId={appId} 
+      channelName={channelName} 
+      mode="rtc"  // Default: all participants can publish
+    />
+  );
+}
+```
+
+**Note:** In RTC mode, all users automatically get camera and microphone controls. No role management needed.
+
+### Live Streaming Mode (Host/Audience)
+
+#### Host/Teacher Component
 
 For teachers/hosts to start a live stream:
 
@@ -42,12 +67,13 @@ export default function TeacherPage() {
       appId={appId} 
       channelName={channelName} 
       role="host" 
+      mode="live"  // Live streaming mode
     />
   );
 }
 ```
 
-### Audience/Student Component
+#### Audience/Student Component
 
 For students/audience to join a live stream:
 
@@ -63,6 +89,7 @@ export default function StudentPage() {
       appId={appId} 
       channelName={channelName} 
       role="audience" 
+      mode="live"  // Live streaming mode
     />
   );
 }
@@ -70,7 +97,16 @@ export default function StudentPage() {
 
 ## Features
 
-### Host Features
+### Video Calling Mode (RTC) - All Participants
+- ✅ All participants can share video/audio simultaneously
+- ✅ Toggle microphone on/off (all participants)
+- ✅ Toggle camera on/off (all participants)
+- ✅ Screen sharing (all participants)
+- ✅ View all participants in grid layout
+- ✅ End call
+- ✅ Peer-to-peer communication
+
+### Live Streaming Mode (LIVE) - Host Features
 - ✅ Start video/audio stream
 - ✅ Toggle microphone on/off
 - ✅ Toggle camera on/off
@@ -78,10 +114,10 @@ export default function StudentPage() {
 - ✅ View all participants
 - ✅ End call
 
-### Audience Features
+### Live Streaming Mode (LIVE) - Audience Features
 - ✅ Watch live stream
 - ✅ Raise hand (UI indicator)
-- ✅ Promote to host (if needed)
+- ✅ Promote to host (if allowed)
 - ✅ View all participants
 - ✅ Leave call
 
@@ -94,10 +130,22 @@ interface CallProps {
   appId: string;              // Required: Your Agora App ID
   channelName: string;         // Required: Channel name for the session
   token?: string | null;       // Optional: Token for production (null for development)
-  role?: "host" | "audience";  // Optional: Default is "host"
+  role?: "host" | "audience";  // Optional: Default is "host" (only used in "live" mode)
   uid?: string | number;       // Optional: User ID (auto-generated if not provided)
+  lockRole?: boolean;          // Optional: Prevents role changes (default: false)
+  mode?: "rtc" | "live";      // Optional: "rtc" for video calling, "live" for streaming (default: "rtc")
 }
 ```
+
+### Mode Comparison
+
+| Feature | RTC Mode (Video Calling) | LIVE Mode (Streaming) |
+|---------|-------------------------|----------------------|
+| **Use Case** | Video calls, consultations | Live streams, webinars |
+| **Participants** | All can publish | Only host publishes |
+| **Controls** | All users have controls | Only host has controls |
+| **Role Management** | Not needed | Host/Audience roles |
+| **Default** | ✅ Yes | No |
 
 ## Token Generation (Production)
 
@@ -223,9 +271,18 @@ This implementation uses `agora-rtc-react`, which provides React hooks that simp
 ### Mode Configuration
 
 - **`mode: "rtc"`** - For video calling where all users can publish (peer-to-peer)
-- **`mode: "live"`** - For live streaming with host/audience roles (what we use)
+  - Default mode for video calls
+  - All participants are peers
+  - Perfect for consultations, meetings, one-on-one calls
+  - No role management needed
 
-Our implementation uses `"live"` mode to support teacher/student roles where only the teacher publishes by default.
+- **`mode: "live"`** - For live streaming with host/audience roles
+  - Host publishes video/audio
+  - Audience watches the stream
+  - Supports audience-to-host promotion
+  - Perfect for webinars, teaching sessions
+
+**Default:** The component defaults to `"rtc"` mode for video calling. Set `mode="live"` for streaming scenarios.
 
 ## Support
 
